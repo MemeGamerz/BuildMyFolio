@@ -1,0 +1,293 @@
+@import "tailwindcss";
+
+@variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-brand-50: #faf5ff;
+  --color-brand-100: #f3e8ff;
+  --color-brand-500: #a855f7;
+  --color-brand-600: #9333ea;
+  --color-brand-700: #7e22ce;
+  --color-brand-900: #581c87;
+
+  /* NEW: 3D and Fluid Animation Keyframes */
+  --animate-fade-in-up: fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-blob: blob 10s infinite alternate;
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-float-delayed: float-delayed 8s ease-in-out infinite;
+  --animate-grid-flow: grid-flow 20s linear infinite;
+  --animate-glare: glare 3s infinite;
+  --animate-shake: shake 0.5s cubic-bezier(.36, .07, .19, .97) both;
+
+  @keyframes fade-in-up {
+    0% {
+      opacity: 0;
+      transform: translateY(40px) scale(0.95);
+    }
+
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes blob {
+    0% {
+      transform: translate(0px, 0px) scale(1) rotate(0deg);
+    }
+
+    33% {
+      transform: translate(30px, -50px) scale(1.1) rotate(10deg);
+    }
+
+    66% {
+      transform: translate(-20px, 20px) scale(0.9) rotate(-10deg);
+    }
+
+    100% {
+      transform: translate(0px, 0px) scale(1) rotate(0deg);
+    }
+  }
+
+  @keyframes float {
+
+    0%,
+    100% {
+      transform: translateY(0px) rotate(0deg);
+    }
+
+    50% {
+      transform: translateY(-20px) rotate(2deg);
+    }
+  }
+
+  @keyframes float-delayed {
+
+    0%,
+    100% {
+      transform: translateY(0px) rotate(0deg);
+    }
+
+    50% {
+      transform: translateY(20px) rotate(-2deg);
+    }
+  }
+
+  @keyframes grid-flow {
+    0% {
+      transform: translateY(0);
+    }
+
+    100% {
+      transform: translateY(50px);
+    }
+  }
+
+  @keyframes glare {
+    0% {
+      transform: translateX(-100%) skewX(-15deg);
+    }
+
+    20%,
+    100% {
+      transform: translateX(200%) skewX(-15deg);
+    }
+  }
+
+  @keyframes shake {
+
+    10%,
+    90% {
+      transform: translate3d(-1px, 0, 0);
+    }
+
+    20%,
+    80% {
+      transform: translate3d(2px, 0, 0);
+    }
+
+    30%,
+    50%,
+    70% {
+      transform: translate3d(-4px, 0, 0);
+    }
+
+    40%,
+    60% {
+      transform: translate3d(4px, 0, 0);
+    }
+  }
+}
+
+@layer base {
+  body {
+    background-color: #f8fafc;
+    color: #0f172a;
+    margin: 0;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+    transition: background-color 0.5s ease, color 0.5s ease;
+  }
+
+  html.dark body {
+    background-color: #020617;
+    color: #f8fafc;
+  }
+}
+
+.animate-delay-100 {
+  animation-delay: 100ms;
+  opacity: 0;
+}
+
+.animate-delay-200 {
+  animation-delay: 200ms;
+  opacity: 0;
+}
+
+.animate-delay-300 {
+  animation-delay: 300ms;
+  opacity: 0;
+}
+
+.animate-delay-400 {
+  animation-delay: 400ms;
+  opacity: 0;
+}
+
+/* 3D Perspective Utilities */
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+.transform-3d {
+  transform-style: preserve-3d;
+}
+
+/* GrapesJS Core Editor UI Overrides (Kept Intact for Editor functionality) */
+:root {
+  --editor-bg: #ffffff;
+  --editor-panel: #f1f5f9;
+  --editor-border: #e2e8f0;
+  --editor-text: #0f172a;
+  --editor-text-muted: #64748b;
+  --editor-primary: #9333ea;
+  --editor-canvas-bg: #e2e8f0;
+  --editor-input-bg: #ffffff;
+}
+
+html.dark {
+  --editor-bg: #0f172a;
+  --editor-panel: #1e293b;
+  --editor-border: #334155;
+  --editor-text: #f8fafc;
+  --editor-text-muted: #94a3b8;
+  --editor-primary: #a855f7;
+  --editor-canvas-bg: #cbd5e1;
+  --editor-input-bg: #020617;
+}
+
+.gjs-editor {
+  font-family: 'Inter', sans-serif !important;
+  background-color: var(--editor-bg) !important;
+  transition: all 0.3s;
+}
+
+.gjs-cv-canvas {
+  background-color: var(--editor-canvas-bg) !important;
+  transition: all 0.3s;
+}
+
+.gjs-one-bg,
+.gjs-pn-views-container {
+  background-color: var(--editor-bg) !important;
+  border-left: 1px solid var(--editor-border) !important;
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.gjs-two-bg,
+.gjs-sm-sector,
+.gjs-clm-tags,
+.gjs-trt-traits {
+  background-color: var(--editor-bg) !important;
+}
+
+.gjs-three-bg,
+.gjs-sm-properties {
+  background-color: var(--editor-bg) !important;
+}
+
+.gjs-four-bg {
+  background-color: var(--editor-primary) !important;
+}
+
+.gjs-one-color {
+  color: var(--editor-text) !important;
+}
+
+.gjs-two-color {
+  color: var(--editor-text-muted) !important;
+}
+
+.gjs-three-color {
+  color: var(--editor-text) !important;
+}
+
+.gjs-four-color,
+.gjs-four-color-h:hover {
+  color: var(--editor-primary) !important;
+}
+
+.gjs-sm-title,
+.gjs-clm-tags .gjs-sm-title,
+.gjs-trt-traits .gjs-sm-title {
+  background-color: var(--editor-panel) !important;
+  color: var(--editor-text) !important;
+  border-bottom: 1px solid var(--editor-border) !important;
+  font-weight: 600 !important;
+  padding: 10px !important;
+}
+
+.gjs-field,
+.gjs-field-colorp-c {
+  background-color: var(--editor-input-bg) !important;
+  color: var(--editor-text) !important;
+  border: 1px solid var(--editor-border) !important;
+  border-radius: 6px !important;
+  box-shadow: none !important;
+}
+
+.gjs-block {
+  border: 1px solid var(--editor-border) !important;
+  border-radius: 8px !important;
+  background: var(--editor-panel) !important;
+  color: var(--editor-text-muted) !important;
+  transition: all 0.2s ease-in-out !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05) !important;
+}
+
+.gjs-block:hover {
+  border-color: var(--editor-primary) !important;
+  color: var(--editor-primary) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 0 12px rgba(168, 85, 247, 0.3) !important;
+}
+
+.gjs-pn-btn {
+  color: var(--editor-text-muted) !important;
+  transition: all 0.2s;
+}
+
+.gjs-pn-btn:hover {
+  color: var(--editor-text) !important;
+  background: var(--editor-panel) !important;
+  border-radius: 6px;
+}
+
+.gjs-pn-active {
+  color: var(--editor-primary) !important;
+  background-color: var(--editor-bg) !important;
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 1px var(--editor-primary) !important;
+}

@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>BuildMyFolio - AI Website Builder</title>
+    
+    <!-- ANTI-FOUC SCRIPT: Prevents the white flash on refresh -->
+    <style>
+      html, body { margin: 0; padding: 0; width: 100%; height: 100%; }
+      html.dark-transitioning { background-color: #020617; }
+      html.light-transitioning { background-color: #f8fafc; }
+    </style>
+    <script>
+      (function() {
+        try {
+          var theme = localStorage.getItem('theme') || 'light';
+          var html = document.documentElement;
+          if (theme === 'dark') {
+            html.classList.add('dark', 'dark-transitioning');
+          } else {
+            html.classList.add('light-transitioning');
+          }
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
