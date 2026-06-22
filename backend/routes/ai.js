@@ -6,59 +6,38 @@ const router = express.Router();
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// Using the requested models. Added generationConfig for high thinking (if supported)
-const primaryModel = genAI.getGenerativeModel({ model: 'gemini-3.1-flash-lite' });
-const fallbackModel = genAI.getGenerativeModel({ model: 'gemma-4-31b-it' });
+// Using the requested models with thinking level set to HIGH in the config
+const generationConfig = {
+    thinkingConfig: {
+        thinkingLevel: 'HIGH'
+    }
+};
+
+const primaryModel = genAI.getGenerativeModel({ 
+    model: 'gemini-3.1-flash-lite',
+    generationConfig
+});
+const fallbackModel = genAI.getGenerativeModel({ 
+    model: 'gemma-4-31b-it',
+    generationConfig
+});
 
 async function generateWithFallback(prompt) {
-    const fullPrompt = "SYSTEM INSTRUCTION: SET THINKING TO HIGH. You must think deeply, analyze the request step-by-step, and produce the highest quality, robust output possible before responding.\n\n" + prompt;
     try {
-        return await primaryModel.generateContent(fullPrompt);
+        return await primaryModel.generateContent(prompt);
     } catch (error) {
         console.warn('Primary model failed, falling back to gemma-4-31b-it:', error.message);
-        return await fallbackModel.generateContent(fullPrompt);
+        return await fallbackModel.generateContent(prompt);
     }
 }
 
-const getSystemContext = (useCase) => {
-    const contexts = {
-        'Personal Portfolio': `Structure required: 1. A clean, floating Navigation bar. 2. A massive, elegant Hero section with oversized typography. 3. A Bento-box style 'About/Skills' grid. 4. A 'Selected Works' masonry or flex-wrap grid. 5. A beautiful minimal footer.`,
-        'Startup Landing Page': `Structure required: 1. Glassmorphic Sticky Navbar. 2. Immersive Hero with a pill-shaped badge, massive headline, and glowing CTA. 3. Feature section using a 3-column CSS Grid. 4. Social Proof/Testimonials in modern cards. 5. Large CTA section. 6. Minimal Footer.`,
-        'Agency Website': `Structure required: 1. Minimalist Navbar. 2. Brutalist/Elegant Hero statement. 3. Services offered in expansive, hover-animated cards. 4. Selected Client Showcase. 5. 'Let's Work Together' fluid contact area. 6. Footer.`,
-        'Product Showcase': `Structure required: 1. Elegant Header. 2. Immersive Hero featuring the product headline with a soft glowing background. 3. Key benefits section (alternating text/image layout with large whitespace). 4. Premium Pricing table. 5. Buy Now CTA footer.`,
-        'Resume / Job Portfolio': `Structure required: 1. Professional, highly readable Header with Contact/Resume Download CTA. 2. Clean Hero section highlighting the current role and objective. 3. Detailed Experience timeline or cards. 4. Education & Certifications grid. 5. Professional minimal footer. Focus on print-friendly or highly structured layout.`,
-        'Student / Leadership Portfolio': `Structure required: 1. Bold, persuasive Header for a campaign. 2. Impactful Hero section stating the Target Position. 3. Manifesto/Leadership Vision section. 4. Key Achievements and Participation timeline/grid. 5. Persuasive CTA footer.`
-    };
-    return contexts[useCase] || `Structure required: A well-organized semantic HTML layout with Header, Main Content Area, and Footer.`;
-};
-
-router.post('/generate', verifyToken, async (req, res) => {
-    const { useCase, aesthetics, dynamicData } = req.body;
-
-    if (!useCase || !aesthetics || !dynamicData) {
-        return res.status(400).json({ error: 'Missing required architecture details.' });
-    }
-
-    const formattedDynamicContext = Object.entries(dynamicData)
-        .map(([key, value]) => {
-            const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
-            return `- ${label}: ${value || '(User left this blank. Invent highly creative, premium professional content for this)'}`;
-        })
-        .join('\n');
-
-    const prompt = `
-        You are a World-Class Principal UI/UX Designer and Awwwards-winning Frontend Developer. 
-        Your job is to generate a breathtaking, ultra-modern, graceful, and highly fluid website.
-
-        ### USER REQUEST ###
-        Website Archetype: ${useCase}
-        Aesthetics & Vibe requested: ${aesthetics || 'Ultra-modern, glassmorphism, clean, expensive, and graceful.'}
-        
-        ### SPECIFIC CONTENT CONTEXT ###
-        ${formattedDynamicContext}
-        
-        ### ARCHITECTURE CONTEXT ###
-        ${getSystemContext(useCase)}
+const getFineTunedPrompt = (useCase, aesthetics, formattedDynamicContext, customInstructions) => {
+    const universalRules = `
+        ### CRITICAL INSTRUCTION: CONTENT EXPANSION & EMOTIONAL DEPTH ###
+        1. DO NOT SHORTEN OR SUMMARIZE THE USER'S INPUT. You must include all key details provided.
+        2. EXPAND on the content gracefully. If the user provides a brief summary or bullet points, transform them into emotionally resonant, compelling, and professional copy.
+        3. MUST SOUND 100% HUMAN-WRITTEN: Do NOT over-exaggerate. Avoid "AI-speak" buzzwords. Keep the tone grounded, authentic, and highly professional.
+        4. Create beautifully structured HTML to house this expanded content (e.g., use blockquotes, detailed paragraphs, multi-layered cards).
 
         ### INSTRUCTION 1: ULTRA-MODERN AESTHETICS & RESPONSIVENESS ###
         1. Make the design feel EXPENSIVE and GRACEFUL. Use Glassmorphism, subtle gradients, rounded corners, and generous whitespace.
@@ -82,6 +61,148 @@ router.post('/generate', verifyToken, async (req, res) => {
         Return ONLY the raw JSON object. Do not include markdown formatting like \`\`\`json.
     `;
 
+    const baseData = `
+        ### USER REQUEST ###
+        Aesthetics & Vibe requested: ${aesthetics || 'Ultra-modern, glassmorphism, clean, expensive, and graceful.'}
+        
+        ### SPECIFIC CONTENT CONTEXT ###
+        ${formattedDynamicContext}
+
+        ${customInstructions ? `### ADDITIONAL USER INSTRUCTIONS ###\n        ${customInstructions}\n        (CRITICAL: You MUST strictly adhere to these custom instructions above all else).` : ''}
+    `;
+
+    if (useCase === 'Personal Portfolio') {
+        return `
+        You are a Creative Director & Awwwards-winning Developer. 
+        Your job is to generate a highly visual, personality-driven, creative personal portfolio website.
+
+        ### ARCHITECTURE CONTEXT ###
+        1. A clean, floating Navigation bar. 
+        2. A massive, elegant Hero section with oversized typography. You MUST include an \`<img>\` tag with a high-quality abstract photo placeholder (e.g. \`https://picsum.photos/1200/800\`) or professional headshot placeholder.
+        3. A Bento-box style 'About/Skills' grid. 
+        4. A 'Selected Works' masonry or flex-wrap grid. 
+        5. A beautiful minimal footer.
+
+        ${baseData}
+        ${universalRules}
+        `;
+    }
+
+    if (useCase === 'Startup Landing Page') {
+        return `
+        You are a Silicon Valley Principal UI/UX Designer & Growth Hacker.
+        Your job is to generate a conversion-optimized, high-tech, modern SaaS landing page.
+
+        ### ARCHITECTURE CONTEXT ###
+        1. Glassmorphic Sticky Navbar. 
+        2. Immersive Hero with a pill-shaped badge, massive headline, glowing CTA. You MUST include a bold product mockup or abstract tech background image placeholder (e.g. \`https://picsum.photos/1200/800\`).
+        3. Feature section using a 3-column CSS Grid. 
+        4. Social Proof/Testimonials in modern cards. 
+        5. Large CTA section & Minimal Footer.
+
+        ${baseData}
+        ${universalRules}
+        `;
+    }
+
+    if (useCase === 'Agency Website') {
+        return `
+        You are an Executive Creative Director of a top-tier digital agency.
+        Your job is to generate a premium B2B agency website focusing on brutalist or elegant minimalism, large typography, and expansive case study cards.
+
+        ### ARCHITECTURE CONTEXT ###
+        1. Minimalist Navbar. 
+        2. Brutalist/Elegant Hero statement with a large cinematic hero image placeholder overlay (e.g. \`https://picsum.photos/1200/600\`).
+        3. Services offered in expansive, hover-animated cards. 
+        4. Selected Client Showcase. 
+        5. 'Let's Work Together' fluid contact area & Footer.
+
+        ${baseData}
+        ${universalRules}
+        `;
+    }
+
+    if (useCase === 'Product Showcase') {
+        return `
+        You are a Lead Product Designer at a top D2C brand.
+        Your job is to generate an immersive, scroll-driven product reveal page with large whitespace and premium typography.
+
+        ### ARCHITECTURE CONTEXT ###
+        1. Elegant Header. 
+        2. Immersive Hero featuring the product headline with a giant edge-to-edge product shot placeholder (e.g. \`https://picsum.photos/1200/800\`).
+        3. Key benefits section (alternating text/image layout with large whitespace). 
+        4. Premium Pricing table. 
+        5. Buy Now CTA footer.
+
+        ${baseData}
+        ${universalRules}
+        `;
+    }
+
+    if (useCase === 'Resume / Job Portfolio') {
+        return `
+        You are an Expert Technical Recruiter & Print Layout Designer.
+        Your job is to generate a highly readable, impeccably structured online CV document.
+        CRITICAL: This is NOT a standard sprawling website. Do not use excessive web animations or massive abstract heros. Focus purely on a highly structured, clean layout that reads like a professional resume.
+
+        ### ARCHITECTURE CONTEXT ###
+        1. Professional, highly readable Header. You MUST include a clean, professional headshot placeholder (circular or rounded square, e.g. \`https://picsum.photos/200/200\`) near the contact info.
+        2. Clean Summary section highlighting the current role and objective. 
+        3. Detailed Experience timeline or structured cards. 
+        4. Education & Certifications grid. 
+        5. Professional minimal footer.
+
+        ${baseData}
+        ${universalRules}
+        `;
+    }
+
+    if (useCase === 'Student / Leadership Portfolio') {
+        return `
+        You are an Ivy League Admissions Consultant & Campaign Manager.
+        Your job is to generate a persuasive, narrative-driven campaign or academic profile page highlighting leadership and community impact.
+
+        ### ARCHITECTURE CONTEXT ###
+        1. Bold, persuasive Header for a campaign. 
+        2. Impactful Hero section stating the Target Position. You MUST include a friendly, approachable headshot or action shot placeholder (e.g. \`https://picsum.photos/400/400\`).
+        3. Manifesto/Leadership Vision section. 
+        4. Key Achievements and Participation timeline/grid. 
+        5. Persuasive CTA footer.
+
+        ${baseData}
+        ${universalRules}
+        `;
+    }
+
+    // Default Fallback
+    return `
+        You are a World-Class Principal UI/UX Designer and Frontend Developer. 
+        Your job is to generate a breathtaking, ultra-modern website.
+
+        ### ARCHITECTURE CONTEXT ###
+        A well-organized semantic HTML layout with Header, Main Content Area, and Footer.
+
+        ${baseData}
+        ${universalRules}
+    `;
+};
+
+router.post('/generate', verifyToken, async (req, res) => {
+    const { useCase, aesthetics, dynamicData, customInstructions } = req.body;
+
+    if (!useCase || !aesthetics || !dynamicData) {
+        return res.status(400).json({ error: 'Missing required architecture details.' });
+    }
+
+    const formattedDynamicContext = Object.entries(dynamicData)
+        .map(([key, value]) => {
+            const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+            return `- ${label}: ${value || '(User left this blank. Invent highly creative, premium professional content for this)'}`;
+        })
+        .join('\n');
+
+    const prompt = getFineTunedPrompt(useCase, aesthetics, formattedDynamicContext, customInstructions);
+
     try {
         const result = await generateWithFallback(prompt);
         let textResponse = result.response.text();
@@ -102,8 +223,11 @@ router.post('/edit', verifyToken, async (req, res) => {
     }
 
     const aiPrompt = `
-        You are an elite AI Web Developer Co-pilot. The user is editing a website in a drag-and-drop builder.
+        You are an elite AI Web Developer Co-pilot and Expert Copywriter. The user is editing a website in a drag-and-drop builder.
         They want to modify their existing website based on a new instruction.
+
+        ### CRITICAL RULE: CONTENT PRESERVATION ###
+        Do NOT shorten, summarize, or remove existing content unless explicitly asked. Maintain emotional depth and key details.
 
         ### USER'S INSTRUCTION ###
         "${userPrompt}"

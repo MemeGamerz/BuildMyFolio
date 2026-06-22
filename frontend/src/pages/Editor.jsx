@@ -75,6 +75,25 @@ const Editor = () => {
       });
 
       editor.getConfig().dragMode = 'absolute';
+      
+      // Make all new and existing elements freely draggable and resizable (Canva-style)
+      editor.on('component:add', (component) => {
+        component.set({ resizable: true });
+        const style = component.getStyle();
+        if (!style.position) {
+          // Defaults for absolute drag mode to feel smooth
+          component.addStyle({ position: 'relative' }); 
+        }
+      });
+
+      // Enable resizability for components loaded from initial HTML
+      const wrapper = editor.getWrapper();
+      if (wrapper) {
+        wrapper.components().forEach((comp) => {
+          comp.set({ resizable: true });
+        });
+      }
+
       editorRef.current = editor;
     }
     return () => {
