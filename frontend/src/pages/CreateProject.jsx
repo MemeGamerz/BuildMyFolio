@@ -26,19 +26,56 @@ const archetypeSchemas = {
     { id: 'productName', label: 'Product Name', type: 'input', placeholder: 'e.g., Lumina Smart Desk' },
     { id: 'keyFeatures', label: 'Key Features', type: 'textarea', placeholder: 'e.g., Motorized height adjustment, built-in wireless charging, cable management.' },
     { id: 'targetUseCases', label: 'Target Use Cases', type: 'textarea', placeholder: 'e.g., Remote work from home, executive offices, creative studios.' }
+  ],
+  'Resume / Job Portfolio': [
+    { id: 'candidateName', label: 'Candidate Name', type: 'input', placeholder: 'e.g., John Smith' },
+    { id: 'targetJobTitle', label: 'Target Job Title', type: 'input', placeholder: 'e.g., Senior Software Engineer' },
+    { id: 'professionalSummary', label: 'Professional Summary', type: 'textarea', placeholder: 'e.g., Highly motivated engineer with 5 years of experience...' },
+    { id: 'workExperience', label: 'Work Experience', type: 'textarea', placeholder: 'e.g., 2020-2023: Lead Developer at X Corp. 2018-2020: Developer at Y Inc.' },
+    { id: 'education', label: 'Education', type: 'input', placeholder: 'e.g., B.S. in Computer Science, University of Z' },
+    { id: 'keySkills', label: 'Key Skills', type: 'textarea', placeholder: 'e.g., React, Node.js, Python, AWS' }
+  ],
+  'Student / Leadership Portfolio': [
+    { id: 'candidateName', label: 'Candidate Name', type: 'input', placeholder: 'e.g., Emily Chen' },
+    { id: 'targetPosition', label: 'Target Position', type: 'input', placeholder: 'e.g., School Council President' },
+    { id: 'leadershipVision', label: 'Leadership Vision/Manifesto', type: 'textarea', placeholder: 'e.g., My vision is to create a more inclusive and active student body...' },
+    { id: 'keyAchievements', label: 'Key Achievements & Participation', type: 'textarea', placeholder: 'e.g., Debate Club Captain, Organized Winter Charity Drive...' },
+    { id: 'leadershipExperience', label: 'Leadership Experience', type: 'textarea', placeholder: 'e.g., Class Representative 2022-2023' }
   ]
 };
+
+const loadingMessages = [
+  "Analyzing aesthetics...",
+  "Structuring DOM...",
+  "Writing custom CSS...",
+  "Injecting JavaScript...",
+  "Polishing the layout..."
+];
 
 const CreateProject = () => {
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
 
   // Core State
-  const[useCase, setUseCase] = useState('Personal Portfolio');
+  const [useCase, setUseCase] = useState('Personal Portfolio');
   const [aesthetics, setAesthetics] = useState('');
   const [dynamicData, setDynamicData] = useState({});
   const [isGenerating, setIsGenerating] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [loadingStep, setLoadingStep] = useState(0);
+
+  // Cycle loading messages
+  useEffect(() => {
+    let interval;
+    if (isGenerating) {
+      interval = setInterval(() => {
+        setLoadingStep((prev) => (prev + 1) % loadingMessages.length);
+      }, 2000);
+    } else {
+      setLoadingStep(0);
+    }
+    return () => clearInterval(interval);
+  }, [isGenerating]);
 
   // Initialize dynamic data state when useCase changes
   useEffect(() => {
@@ -68,7 +105,7 @@ const CreateProject = () => {
     e.preventDefault();
     setIsGenerating(true);
     
-    // Use the first dynamic field (Project/Startup/Agency Name) as the database Title
+    // Use the first dynamic field as the database Title
     const dbTitleKey = archetypeSchemas[useCase][0].id;
     const dbTitle = dynamicData[dbTitleKey] || `${useCase} Project`;
 
@@ -187,7 +224,7 @@ const CreateProject = () => {
               {isGenerating ? (
                 <>
                   <Sparkles className="h-5 w-5 animate-pulse text-brand-300"/> 
-                  <span className="animate-pulse">Engineering Layout...</span>
+                  <span className="animate-pulse">{loadingMessages[loadingStep]}</span>
                 </>
               ) : (
                 <>

@@ -5,14 +5,29 @@ const verifyToken = require('../middleware/auth');
 const router = express.Router();
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: 'gemini-3.1-flash-lite-preview' });
+
+// Using the requested models. Added generationConfig for high thinking (if supported)
+const primaryModel = genAI.getGenerativeModel({ model: 'gemini-3.1-flash-lite' });
+const fallbackModel = genAI.getGenerativeModel({ model: 'gemma-4-31b-it' });
+
+async function generateWithFallback(prompt) {
+    const fullPrompt = "SYSTEM INSTRUCTION: SET THINKING TO HIGH. You must think deeply, analyze the request step-by-step, and produce the highest quality, robust output possible before responding.\n\n" + prompt;
+    try {
+        return await primaryModel.generateContent(fullPrompt);
+    } catch (error) {
+        console.warn('Primary model failed, falling back to gemma-4-31b-it:', error.message);
+        return await fallbackModel.generateContent(fullPrompt);
+    }
+}
 
 const getSystemContext = (useCase) => {
     const contexts = {
         'Personal Portfolio': `Structure required: 1. A clean, floating Navigation bar. 2. A massive, elegant Hero section with oversized typography. 3. A Bento-box style 'About/Skills' grid. 4. A 'Selected Works' masonry or flex-wrap grid. 5. A beautiful minimal footer.`,
         'Startup Landing Page': `Structure required: 1. Glassmorphic Sticky Navbar. 2. Immersive Hero with a pill-shaped badge, massive headline, and glowing CTA. 3. Feature section using a 3-column CSS Grid. 4. Social Proof/Testimonials in modern cards. 5. Large CTA section. 6. Minimal Footer.`,
         'Agency Website': `Structure required: 1. Minimalist Navbar. 2. Brutalist/Elegant Hero statement. 3. Services offered in expansive, hover-animated cards. 4. Selected Client Showcase. 5. 'Let's Work Together' fluid contact area. 6. Footer.`,
-        'Product Showcase': `Structure required: 1. Elegant Header. 2. Immersive Hero featuring the product headline with a soft glowing background. 3. Key benefits section (alternating text/image layout with large whitespace). 4. Premium Pricing table. 5. Buy Now CTA footer.`
+        'Product Showcase': `Structure required: 1. Elegant Header. 2. Immersive Hero featuring the product headline with a soft glowing background. 3. Key benefits section (alternating text/image layout with large whitespace). 4. Premium Pricing table. 5. Buy Now CTA footer.`,
+        'Resume / Job Portfolio': `Structure required: 1. Professional, highly readable Header with Contact/Resume Download CTA. 2. Clean Hero section highlighting the current role and objective. 3. Detailed Experience timeline or cards. 4. Education & Certifications grid. 5. Professional minimal footer. Focus on print-friendly or highly structured layout.`,
+        'Student / Leadership Portfolio': `Structure required: 1. Bold, persuasive Header for a campaign. 2. Impactful Hero section stating the Target Position. 3. Manifesto/Leadership Vision section. 4. Key Achievements and Participation timeline/grid. 5. Persuasive CTA footer.`
     };
     return contexts[useCase] || `Structure required: A well-organized semantic HTML layout with Header, Main Content Area, and Footer.`;
 };
@@ -41,6 +56,9 @@ router.post('/generate', verifyToken, async (req, res) => {
         
         ### SPECIFIC CONTENT CONTEXT ###
         ${formattedDynamicContext}
+        
+        ### ARCHITECTURE CONTEXT ###
+        ${getSystemContext(useCase)}
 
         ### INSTRUCTION 1: ULTRA-MODERN AESTHETICS & RESPONSIVENESS ###
         1. Make the design feel EXPENSIVE and GRACEFUL. Use Glassmorphism, subtle gradients, rounded corners, and generous whitespace.
@@ -65,7 +83,7 @@ router.post('/generate', verifyToken, async (req, res) => {
     `;
 
     try {
-        const result = await model.generateContent(prompt);
+        const result = await generateWithFallback(prompt);
         let textResponse = result.response.text();
         textResponse = textResponse.replace(/^```json/g, '').replace(/```$/g, '').trim();
         const parsedData = JSON.parse(textResponse);
@@ -111,7 +129,7 @@ router.post('/edit', verifyToken, async (req, res) => {
     `;
 
     try {
-        const result = await model.generateContent(aiPrompt);
+        const result = await generateWithFallback(aiPrompt);
         let textResponse = result.response.text();
         textResponse = textResponse.replace(/^```json/g, '').replace(/```$/g, '').trim();
         const parsedData = JSON.parse(textResponse);

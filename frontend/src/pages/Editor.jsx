@@ -7,6 +7,13 @@ import webpagePreset from 'grapesjs-preset-webpage';
 import { ThemeContext } from '../context/ThemeContext';
 import { Save, Download, ArrowLeft, Loader2, Monitor, Sun, Moon, Sparkles, Send } from 'lucide-react';
 
+const aiLoadingMessages = [
+  "Analyzing canvas context...",
+  "Engineering updates...",
+  "Injecting smart elements...",
+  "Polishing the layout..."
+];
+
 const Editor = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -18,8 +25,22 @@ const Editor = () => {
   const { isDark, toggleTheme } = useContext(ThemeContext);
 
   // Floating AI Bar State
-  const[aiPrompt, setAiPrompt] = useState('');
+  const [aiPrompt, setAiPrompt] = useState('');
   const [isAiProcessing, setIsAiProcessing] = useState(false);
+  const [aiLoadingStep, setAiLoadingStep] = useState(0);
+
+  // Cycle loading messages
+  useEffect(() => {
+    let interval;
+    if (isAiProcessing) {
+      interval = setInterval(() => {
+        setAiLoadingStep((prev) => (prev + 1) % aiLoadingMessages.length);
+      }, 2000);
+    } else {
+      setAiLoadingStep(0);
+    }
+    return () => clearInterval(interval);
+  }, [isAiProcessing]);
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -76,7 +97,9 @@ const Editor = () => {
 
   const handleExport = () => {
     if (!editorRef.current) return;
-    const htmlCode = editorRef.current.getHtml(); // This now natively includes the AI's <script> tags!
+    // Strip extraneous top-level tags if the AI accidentally added them
+    let htmlCode = editorRef.current.getHtml();
+    htmlCode = htmlCode.replace(/<\/?(html|head|body|title)[^>]*>/gi, '');
     const cssCode = editorRef.current.getCss();
     
     const isDarkExport = cssCode.includes('background-color: #0') || cssCode.includes('background: #0') || cssCode.includes('background-color: #1');
@@ -176,7 +199,11 @@ const Editor = () => {
       <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 w-[90%] max-w-2xl z-50">
         <form 
           onSubmit={handleAiEdit} 
-          className="flex items-center gap-3 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border border-gray-200/50 dark:border-slate-700/50 p-2 rounded-2xl shadow-2xl shadow-brand-500/10 transition-all duration-300 hover:shadow-brand-500/20"
+          className={`flex items-center gap-3 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border p-2 rounded-2xl transition-all duration-300 ${
+            isAiProcessing 
+              ? 'border-brand-500 shadow-xl shadow-brand-500/40 animate-pulse' 
+              : 'border-gray-200/50 dark:border-slate-700/50 shadow-2xl shadow-brand-500/10 hover:shadow-brand-500/20'
+          }`}
         >
           <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-fuchsia-600 text-white flex-shrink-0 ml-1">
             {isAiProcessing ? <Loader2 className="h-5 w-5 animate-spin" /> : <Sparkles className="h-5 w-5" />}
@@ -186,7 +213,7 @@ const Editor = () => {
             value={aiPrompt}
             onChange={(e) => setAiPrompt(e.target.value)}
             disabled={isAiProcessing}
-            placeholder={isAiProcessing ? "AI is rewriting your canvas..." : "Ask AI to change colors, add a theme toggle button, rewrite text..."}
+            placeholder={isAiProcessing ? aiLoadingMessages[aiLoadingStep] : "Ask AI to change colors, add a theme toggle button, rewrite text..."}
             className="flex-grow bg-transparent border-none outline-none text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 text-sm font-medium px-2"
           />
           <button
