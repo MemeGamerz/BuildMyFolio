@@ -33,11 +33,11 @@ async function generateWithFallback(prompt) {
 
 const getFineTunedPrompt = (useCase, aesthetics, formattedDynamicContext, customInstructions) => {
     const universalRules = `
-        ### CRITICAL INSTRUCTION: CONTENT EXPANSION & EMOTIONAL DEPTH ###
-        1. DO NOT SHORTEN OR SUMMARIZE THE USER'S INPUT. You must include all key details provided.
-        2. EXPAND on the content gracefully. If the user provides a brief summary or bullet points, transform them into emotionally resonant, compelling, and professional copy.
-        3. MUST SOUND 100% HUMAN-WRITTEN: Do NOT over-exaggerate. Avoid "AI-speak" buzzwords. Keep the tone grounded, authentic, and highly professional.
-        4. Create beautifully structured HTML to house this expanded content (e.g., use blockquotes, detailed paragraphs, multi-layered cards).
+        ### CRITICAL INSTRUCTION: CONTENT REPHRASING & RESTRAINT ###
+        1. REPHRASE the user's input to make sense within the context of a professional portfolio structure.
+        2. STRICT RESTRAINT: DO NOT EXAGGERATE, do NOT add emotional depth, and DO NOT go into more depth than required by the user. Keep it strictly grounded.
+        3. MUST SOUND 100% HUMAN-WRITTEN: Avoid "AI-speak" buzzwords. Keep the tone authentic and highly professional.
+        4. Create beautifully structured HTML to house this content (e.g., use blockquotes, detailed paragraphs, multi-layered cards).
 
         ### INSTRUCTION 1: ULTRA-MODERN AESTHETICS & RESPONSIVENESS ###
         1. Make the design feel EXPENSIVE and GRACEFUL. Use Glassmorphism, subtle gradients, rounded corners, and generous whitespace.
@@ -227,7 +227,7 @@ router.post('/edit', verifyToken, async (req, res) => {
         They want to modify their existing website based on a new instruction.
 
         ### CRITICAL RULE: CONTENT PRESERVATION ###
-        Do NOT shorten, summarize, or remove existing content unless explicitly asked. Maintain emotional depth and key details.
+        Do NOT shorten, summarize, or remove existing content unless explicitly asked. Maintain key details and strictly adhere to the user's constraints. Do NOT exaggerate.
 
         ### USER'S INSTRUCTION ###
         "${userPrompt}"
