@@ -5,7 +5,9 @@ import { Plus, Edit2, Trash2, LayoutGrid, Calendar, ArrowRight } from 'lucide-re
 
 const Dashboard = () => {
   const [projects, setProjects] = useState([]);
-  const[loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [editingTitleId, setEditingTitleId] = useState(null);
+  const [editingTitleValue, setEditingTitleValue] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -24,6 +26,31 @@ const Dashboard = () => {
       await api.delete(`/projects/${id}`);
       setProjects(projects.filter(p => p.id !== id));
     } catch (err) {}
+  };
+
+  const startEditing = (project) => {
+    setEditingTitleId(project.id);
+    setEditingTitleValue(project.title);
+  };
+
+  const saveTitle = async (id) => {
+    if (editingTitleId !== id) return;
+    try {
+      await api.put(`/projects/${id}`, { title: editingTitleValue });
+      setProjects(projects.map(p => p.id === id ? { ...p, title: editingTitleValue } : p));
+    } catch (err) {
+      alert("Failed to update title");
+    } finally {
+      setEditingTitleId(null);
+    }
+  };
+
+  const handleKeyDown = (e, id) => {
+    if (e.key === 'Enter') {
+      saveTitle(id);
+    } else if (e.key === 'Escape') {
+      setEditingTitleId(null);
+    }
   };
 
   if (loading) return <div className="min-h-screen pt-32 flex justify-center text-lg text-brand-600 dark:text-brand-400 font-medium">Loading Workspace...</div>;
@@ -60,7 +87,25 @@ const Dashboard = () => {
                   <div className="w-12 h-12 bg-gray-100 dark:bg-slate-800 rounded-xl flex items-center justify-center mb-4 transition-colors">
                     <LayoutGrid className="h-6 w-6 text-gray-600 dark:text-gray-400" />
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2 truncate">{project.title}</h3>
+                  {editingTitleId === project.id ? (
+                    <input
+                      type="text"
+                      autoFocus
+                      value={editingTitleValue}
+                      onChange={(e) => setEditingTitleValue(e.target.value)}
+                      onBlur={() => saveTitle(project.id)}
+                      onKeyDown={(e) => handleKeyDown(e, project.id)}
+                      className="text-xl font-bold text-gray-900 dark:text-white mb-2 truncate w-full bg-transparent border-b-2 border-brand-500 outline-none"
+                    />
+                  ) : (
+                    <h3 
+                      onClick={() => startEditing(project)}
+                      className="text-xl font-bold text-gray-900 dark:text-white mb-2 truncate cursor-pointer hover:text-brand-500 dark:hover:text-brand-400 transition-colors"
+                      title="Click to rename"
+                    >
+                      {project.title}
+                    </h3>
+                  )}
                   <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 gap-2 font-medium">
                     <Calendar className="h-4 w-4 text-brand-400" />
                     {new Date(project.updated_at).toLocaleDateString()}

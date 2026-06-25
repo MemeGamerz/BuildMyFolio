@@ -10,111 +10,53 @@
   --color-brand-700: #7e22ce;
   --color-brand-900: #581c87;
 
-  /* NEW: 3D and Fluid Animation Keyframes */
+  /* NEW: Ultra-Smooth Subtle Animations */
   --animate-fade-in-up: fade-in-up 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  --animate-blob: blob 10s infinite alternate;
-  --animate-float: float 6s ease-in-out infinite;
-  --animate-float-delayed: float-delayed 8s ease-in-out infinite;
-  --animate-grid-flow: grid-flow 20s linear infinite;
-  --animate-glare: glare 3s infinite;
-  --animate-shake: shake 0.5s cubic-bezier(.36, .07, .19, .97) both;
+  --animate-fade-in: fade-in 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-scale-fade: scale-fade 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-pulse-subtle: pulse-subtle 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-slide-in-right: slide-in-right 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 
   @keyframes fade-in-up {
     0% {
       opacity: 0;
-      transform: translateY(40px) scale(0.95);
+      transform: translateY(20px);
     }
-
     100% {
       opacity: 1;
-      transform: translateY(0) scale(1);
-    }
-  }
-
-  @keyframes blob {
-    0% {
-      transform: translate(0px, 0px) scale(1) rotate(0deg);
-    }
-
-    33% {
-      transform: translate(30px, -50px) scale(1.1) rotate(10deg);
-    }
-
-    66% {
-      transform: translate(-20px, 20px) scale(0.9) rotate(-10deg);
-    }
-
-    100% {
-      transform: translate(0px, 0px) scale(1) rotate(0deg);
-    }
-  }
-
-  @keyframes float {
-
-    0%,
-    100% {
-      transform: translateY(0px) rotate(0deg);
-    }
-
-    50% {
-      transform: translateY(-20px) rotate(2deg);
-    }
-  }
-
-  @keyframes float-delayed {
-
-    0%,
-    100% {
-      transform: translateY(0px) rotate(0deg);
-    }
-
-    50% {
-      transform: translateY(20px) rotate(-2deg);
-    }
-  }
-
-  @keyframes grid-flow {
-    0% {
       transform: translateY(0);
     }
-
-    100% {
-      transform: translateY(50px);
-    }
   }
 
-  @keyframes glare {
+  @keyframes fade-in {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+
+  @keyframes scale-fade {
     0% {
-      transform: translateX(-100%) skewX(-15deg);
+      opacity: 0;
+      transform: scale(0.98);
     }
-
-    20%,
     100% {
-      transform: translateX(200%) skewX(-15deg);
+      opacity: 1;
+      transform: scale(1);
     }
   }
 
-  @keyframes shake {
+  @keyframes pulse-subtle {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.85; }
+  }
 
-    10%,
-    90% {
-      transform: translate3d(-1px, 0, 0);
+  @keyframes slide-in-right {
+    0% {
+      opacity: 0;
+      transform: translateX(20px);
     }
-
-    20%,
-    80% {
-      transform: translate3d(2px, 0, 0);
-    }
-
-    30%,
-    50%,
-    70% {
-      transform: translate3d(-4px, 0, 0);
-    }
-
-    40%,
-    60% {
-      transform: translate3d(4px, 0, 0);
+    100% {
+      opacity: 1;
+      transform: translateX(0);
     }
   }
 }
@@ -165,27 +107,27 @@
   transform-style: preserve-3d;
 }
 
-/* GrapesJS Core Editor UI Overrides (Kept Intact for Editor functionality) */
+/* GrapesJS Core Editor UI Overrides - FIGMA STYLE */
 :root {
-  --editor-bg: #ffffff;
-  --editor-panel: #f1f5f9;
-  --editor-border: #e2e8f0;
-  --editor-text: #0f172a;
-  --editor-text-muted: #64748b;
-  --editor-primary: #9333ea;
-  --editor-canvas-bg: #e2e8f0;
-  --editor-input-bg: #ffffff;
+  --editor-bg: #FFFFFF;
+  --editor-panel: #F5F5F5;
+  --editor-border: #E5E5E5;
+  --editor-text: #333333;
+  --editor-text-muted: #8A8A8A;
+  --editor-primary: #18A0FB; /* Figma Blue */
+  --editor-canvas-bg: #E5E5E5;
+  --editor-input-bg: #FFFFFF;
 }
 
 html.dark {
-  --editor-bg: #0f172a;
-  --editor-panel: #1e293b;
-  --editor-border: #334155;
-  --editor-text: #f8fafc;
-  --editor-text-muted: #94a3b8;
-  --editor-primary: #a855f7;
-  --editor-canvas-bg: #cbd5e1;
-  --editor-input-bg: #020617;
+  --editor-bg: #2C2C2C;
+  --editor-panel: #1E1E1E;
+  --editor-border: #444444;
+  --editor-text: #E0E0E0;
+  --editor-text-muted: #8A8A8A;
+  --editor-primary: #18A0FB;
+  --editor-canvas-bg: #1E1E1E;
+  --editor-input-bg: #111111;
 }
 
 .gjs-editor {
@@ -242,11 +184,14 @@ html.dark {
 .gjs-sm-title,
 .gjs-clm-tags .gjs-sm-title,
 .gjs-trt-traits .gjs-sm-title {
-  background-color: var(--editor-panel) !important;
+  background-color: var(--editor-bg) !important;
   color: var(--editor-text) !important;
   border-bottom: 1px solid var(--editor-border) !important;
-  font-weight: 600 !important;
-  padding: 10px !important;
+  font-weight: 500 !important;
+  padding: 8px 12px !important;
+  font-size: 11px !important;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
 }
 
 .gjs-field,
@@ -259,35 +204,52 @@ html.dark {
 }
 
 .gjs-block {
-  border: 1px solid var(--editor-border) !important;
-  border-radius: 8px !important;
-  background: var(--editor-panel) !important;
-  color: var(--editor-text-muted) !important;
-  transition: all 0.2s ease-in-out !important;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05) !important;
+  border: 1px solid transparent !important;
+  border-radius: 4px !important;
+  background: transparent !important;
+  color: var(--editor-text) !important;
+  transition: all 0.1s ease-in-out !important;
+  box-shadow: none !important;
+  padding: 8px !important;
 }
 
 .gjs-block:hover {
-  border-color: var(--editor-primary) !important;
-  color: var(--editor-primary) !important;
-  transform: translateY(-2px);
-  box-shadow: 0 0 12px rgba(168, 85, 247, 0.3) !important;
+  background-color: rgba(255, 255, 255, 0.05) !important;
+  color: var(--editor-text) !important;
+  border-color: var(--editor-border) !important;
+  transform: none;
+  box-shadow: none !important;
 }
 
 .gjs-pn-btn {
   color: var(--editor-text-muted) !important;
-  transition: all 0.2s;
+  transition: color 0.15s ease !important;
 }
 
 .gjs-pn-btn:hover {
   color: var(--editor-text) !important;
-  background: var(--editor-panel) !important;
-  border-radius: 6px;
+  background: transparent !important;
 }
 
 .gjs-pn-active {
   color: var(--editor-primary) !important;
-  background-color: var(--editor-bg) !important;
-  border-radius: 6px;
-  box-shadow: inset 0 0 0 1px var(--editor-primary) !important;
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Custom Scrollbar for Figma Vibe */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--editor-panel);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--editor-border);
+  border: 3px solid var(--editor-panel);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }

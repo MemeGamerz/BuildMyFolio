@@ -37,12 +37,18 @@ const getFineTunedPrompt = (useCase, aesthetics, formattedDynamicContext, custom
         1. REPHRASE the user's input to make sense within the context of a professional portfolio structure.
         2. STRICT RESTRAINT: DO NOT EXAGGERATE, do NOT add emotional depth, and DO NOT go into more depth than required by the user. Keep it strictly grounded.
         3. MUST SOUND 100% HUMAN-WRITTEN: Avoid "AI-speak" buzzwords. Keep the tone authentic and highly professional.
-        4. Create beautifully structured HTML to house this content (e.g., use blockquotes, detailed paragraphs, multi-layered cards).
+        4. Create beautifully structured HTML to house this content.
 
-        ### INSTRUCTION 1: ULTRA-MODERN AESTHETICS & RESPONSIVENESS ###
-        1. Make the design feel EXPENSIVE and GRACEFUL. Use Glassmorphism, subtle gradients, rounded corners, and generous whitespace.
-        2. You MUST build every layout using completely modular CSS Flexbox (\`display: flex; flex-wrap: wrap; gap: 2rem;\`) or CSS Grid.
-        3. Include \`@media (max-width: 768px)\` to stack grids/flex containers to 1 column.
+        ### INSTRUCTION 1: ULTRA-PREMIUM VERCEL/LINEAR AESTHETICS ###
+        1. Act as a Principal Design Engineer at Vercel or Linear. 
+        2. The design MUST be minimalist, high-contrast, and deeply elegant. Use massive amounts of whitespace, crisp typography (Inter or similar), and extremely clean grid/flexbox layouts.
+        3. Do NOT use cheap, bulky shadows or generic UI paradigms. Use subtle borders (e.g., \`border: 1px solid rgba(255,255,255,0.1)\`), incredibly soft glows, and monochromatic or highly muted color palettes unless otherwise specified.
+        4. Include \`@media (max-width: 768px)\` to stack grids/flex containers to 1 column.
+
+        ### INSTRUCTION 2: SMOOTH, SUBTLE MICRO-ANIMATIONS ###
+        1. All animations MUST be extremely subtle, fluid, and premium. Use \`transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);\` (ease-out-expo) for hover states.
+        2. DO NOT use bouncy, wobbly, or cheap jarring animations. Use subtle opacity fades (\`opacity: 0\` to \`opacity: 1\`) and tiny Y-axis translations (\`translateY(10px)\` to \`0\`).
+        3. Implement elegant entrance animations for key sections using CSS \`@keyframes\` and \`animation-fill-mode: forwards\`.
 
         ### INSTRUCTION 2: COLOR, CONTRAST & WRAPPER ###
         1. Wrap the ENTIRE HTML content inside a single \`<div id="website-root">...</div>\`.
@@ -206,11 +212,24 @@ router.post('/generate', verifyToken, async (req, res) => {
     try {
         const result = await generateWithFallback(prompt);
         let textResponse = result.response.text();
-        textResponse = textResponse.replace(/^```json/g, '').replace(/```$/g, '').trim();
-        const parsedData = JSON.parse(textResponse);
-        res.status(200).json({ html: parsedData.html, css: parsedData.css });
+        
+        const jsonMatch = textResponse.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) {
+            console.error("AI Output did not contain JSON:", textResponse);
+            throw new Error("No JSON object found in response");
+        }
+        
+        try {
+            const parsedData = JSON.parse(jsonMatch[0]);
+            res.status(200).json({ html: parsedData.html, css: parsedData.css });
+        } catch (parseError) {
+            console.error("Failed to parse JSON. Extracted string:", jsonMatch[0]);
+            console.error("Parse Error Details:", parseError.message);
+            throw parseError;
+        }
     } catch (error) {
-        console.error('AI Generation Error:', error);
+        require('fs').appendFileSync('ai-debug.log', new Date().toISOString() + ' GENERATE ERROR: ' + (error.stack || error) + '\n');
+        console.error('AI Generation Error:', error.message || error);
         res.status(500).json({ error: 'Failed to generate website layout via AI.' });
     }
 });
@@ -241,9 +260,10 @@ router.post('/edit', verifyToken, async (req, res) => {
         ### TASK & JAVASCRIPT RULES ###
         1. Apply the user's instructions to the HTML and CSS intelligently.
         2. Maintain the #website-root wrapper and global CSS resets.
-        3. If the user asks for interactivity (e.g., "Add a dark mode toggle button"), generate the required HTML button, the CSS styles for the toggle state, AND the vanilla JavaScript inside a \`<script>\` tag at the bottom of the HTML output to make it function.
-        4. If there is an existing \`<script>\` tag, preserve it or update it as necessary.
-        5. Output the COMPLETE updated HTML and COMPLETE updated CSS.
+        3. CRITICAL: Maintain Vercel/Linear level aesthetics. If adding elements, ensure they have massive whitespace, ultra-subtle borders, and soft \`ease-out-expo\` transitions (\`cubic-bezier(0.16, 1, 0.3, 1)\`). NO bouncy/wobbly animations.
+        4. If the user asks for interactivity (e.g., "Add a dark mode toggle button"), generate the required HTML button, the CSS styles for the toggle state, AND the vanilla JavaScript inside a \`<script>\` tag at the bottom of the HTML output to make it function.
+        5. If there is an existing \`<script>\` tag, preserve it or update it as necessary.
+        6. Output the COMPLETE updated HTML and COMPLETE updated CSS.
 
         Generate the response strictly as a JSON object containing EXACTLY two keys:
         1. "html": The complete updated HTML (including any <script> tags).
@@ -255,11 +275,23 @@ router.post('/edit', verifyToken, async (req, res) => {
     try {
         const result = await generateWithFallback(aiPrompt);
         let textResponse = result.response.text();
-        textResponse = textResponse.replace(/^```json/g, '').replace(/```$/g, '').trim();
-        const parsedData = JSON.parse(textResponse);
-        res.status(200).json({ html: parsedData.html, css: parsedData.css });
+        
+        const jsonMatch = textResponse.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) {
+            console.error("AI Edit Output did not contain JSON:", textResponse);
+            throw new Error("No JSON object found in response");
+        }
+        
+        try {
+            const parsedData = JSON.parse(jsonMatch[0]);
+            res.status(200).json({ html: parsedData.html, css: parsedData.css });
+        } catch (parseError) {
+            console.error("Failed to parse JSON. Extracted string:", jsonMatch[0]);
+            console.error("Parse Error Details:", parseError.message);
+            throw parseError;
+        }
     } catch (error) {
-        console.error('AI Edit Error:', error);
+        console.error('AI Edit Error:', error.message || error);
         res.status(500).json({ error: 'Failed to apply edits via AI.' });
     }
 });

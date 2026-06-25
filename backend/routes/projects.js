@@ -66,12 +66,12 @@ router.get('/:id', verifyToken, async (req, res) => {
 router.put('/:id', verifyToken, async (req, res) => {
     const userId = req.user.id;
     const projectId = req.params.id;
-    const { html_content, css_content } = req.body;
+    const { title, html_content, css_content } = req.body;
 
     try {
         const [updateResult] = await db.query(
-            'UPDATE projects SET html_content = ?, css_content = ? WHERE id = ? AND user_id = ?',
-            [html_content, css_content, projectId, userId]
+            'UPDATE projects SET title = COALESCE(?, title), html_content = COALESCE(?, html_content), css_content = COALESCE(?, css_content) WHERE id = ? AND user_id = ?',
+            [title, html_content, css_content, projectId, userId]
         );
 
         if (updateResult.affectedRows === 0) {

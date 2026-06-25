@@ -124,7 +124,9 @@ const CreateProject = () => {
       // 3. Load natively in GrapesJS Editor
       navigate(`/editor/${projectResponse.data.projectId}`);
     } catch (err) {
-      alert('Generation failed. Please refine your prompt inputs.');
+      console.error(err);
+      const errorMsg = err.response?.data?.error || err.message || 'Unknown error';
+      alert(`Generation failed. Details: ${errorMsg}`);
       setIsGenerating(false);
     }
   };
