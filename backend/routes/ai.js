@@ -31,7 +31,7 @@ async function generateWithFallback(prompt) {
     }
 }
 
-const getFineTunedPrompt = (useCase, aesthetics, formattedDynamicContext, customInstructions) => {
+const getFineTunedPrompt = (useCase, portfolioFormat, aesthetics, formattedDynamicContext, customInstructions) => {
     const universalRules = `
         ### CRITICAL INSTRUCTION: CONTENT REPHRASING & RESTRAINT ###
         1. REPHRASE the user's input to make sense within the context of a professional portfolio structure.
@@ -77,7 +77,7 @@ const getFineTunedPrompt = (useCase, aesthetics, formattedDynamicContext, custom
         ${customInstructions ? `### ADDITIONAL USER INSTRUCTIONS ###\n        ${customInstructions}\n        (CRITICAL: You MUST strictly adhere to these custom instructions above all else).` : ''}
     `;
 
-    if (useCase === 'Personal Portfolio') {
+    if (useCase === 'Personal Portfolio' && portfolioFormat === 'Website') {
         return `
         You are a Creative Director & Awwwards-winning Developer. 
         Your job is to generate a highly visual, personality-driven, creative personal portfolio website.
@@ -88,6 +88,41 @@ const getFineTunedPrompt = (useCase, aesthetics, formattedDynamicContext, custom
         3. A Bento-box style 'About/Skills' grid. 
         4. A 'Selected Works' masonry or flex-wrap grid. 
         5. A beautiful minimal footer.
+
+        ${baseData}
+        ${universalRules}
+        `;
+    }
+
+    if (useCase === 'Personal Portfolio' && portfolioFormat === 'Resume (PDF)') {
+        return `
+        You are an Expert Technical Recruiter & Print Layout Designer.
+        Your job is to generate a highly readable, impeccably structured single-page CV document.
+        CRITICAL: This is NOT a standard sprawling website. Focus purely on a highly structured, clean layout that reads like a professional printed resume.
+
+        ### ARCHITECTURE CONTEXT (CANVA-STYLE PDF) ###
+        1. Wrap the entire content inside a container that looks like an A4 page: \`width: 210mm; min-height: 297mm; max-width: 100%; margin: 40px auto; background: white; padding: 20mm; box-shadow: 0 10px 30px rgba(0,0,0,0.1); position: relative;\`.
+        2. CRITICAL - FREE DRAG & DROP: Every single major section or text block inside this A4 page MUST have \`position: absolute;\` with exact \`top\` and \`left\` pixel or percentage values so the user can drag and drop them freely in the canvas editor, just like Canva. 
+        3. Professional, highly readable Header. Include a clean, professional headshot placeholder (e.g. \`https://picsum.photos/200/200\`).
+        4. Detailed Experience timeline, Education, and Skills sections.
+        5. CRITICAL - NO COLLAPSIBLE MEDIA QUERIES: Do NOT generate any @media queries that make the layout relative, collapse the A4 page size, or stack the absolute-positioned blocks vertically on mobile. The PDF layout must remain fixed and absolute on all screen sizes.
+
+        ${baseData}
+        ${universalRules}
+        `;
+    }
+
+    if (useCase === 'Personal Portfolio' && portfolioFormat === 'Student Portfolio (PDF)') {
+        return `
+        You are an Ivy League Admissions Consultant & Print Designer.
+        Your job is to generate a persuasive, single-page academic profile document highlighting leadership and community impact.
+
+        ### ARCHITECTURE CONTEXT (CANVA-STYLE PDF) ###
+        1. Wrap the entire content inside a container that looks like an A4 page: \`width: 210mm; min-height: 297mm; max-width: 100%; margin: 40px auto; background: white; padding: 20mm; box-shadow: 0 10px 30px rgba(0,0,0,0.1); position: relative;\`.
+        2. CRITICAL - FREE DRAG & DROP: Every single major section, image, or text block inside this A4 page MUST have \`position: absolute;\` with exact \`top\` and \`left\` pixel or percentage values so the user can drag and drop them freely in the canvas editor, just like Canva. 
+        3. Impactful Hero/Header stating the Target Position. Include a friendly headshot placeholder (e.g. \`https://picsum.photos/200/200\`).
+        4. Manifesto/Academic Objective section, Key Achievements, and Relevant Coursework.
+        5. CRITICAL - NO COLLAPSIBLE MEDIA QUERIES: Do NOT generate any @media queries that make the layout relative, collapse the A4 page size, or stack the absolute-positioned blocks vertically on mobile. The PDF layout must remain fixed and absolute on all screen sizes.
 
         ${baseData}
         ${universalRules}
@@ -145,40 +180,7 @@ const getFineTunedPrompt = (useCase, aesthetics, formattedDynamicContext, custom
         `;
     }
 
-    if (useCase === 'Resume / Job Portfolio') {
-        return `
-        You are an Expert Technical Recruiter & Print Layout Designer.
-        Your job is to generate a highly readable, impeccably structured online CV document.
-        CRITICAL: This is NOT a standard sprawling website. Do not use excessive web animations or massive abstract heros. Focus purely on a highly structured, clean layout that reads like a professional resume.
-
-        ### ARCHITECTURE CONTEXT ###
-        1. Professional, highly readable Header. You MUST include a clean, professional headshot placeholder (circular or rounded square, e.g. \`https://picsum.photos/200/200\`) near the contact info.
-        2. Clean Summary section highlighting the current role and objective. 
-        3. Detailed Experience timeline or structured cards. 
-        4. Education & Certifications grid. 
-        5. Professional minimal footer.
-
-        ${baseData}
-        ${universalRules}
-        `;
-    }
-
-    if (useCase === 'Student / Leadership Portfolio') {
-        return `
-        You are an Ivy League Admissions Consultant & Campaign Manager.
-        Your job is to generate a persuasive, narrative-driven campaign or academic profile page highlighting leadership and community impact.
-
-        ### ARCHITECTURE CONTEXT ###
-        1. Bold, persuasive Header for a campaign. 
-        2. Impactful Hero section stating the Target Position. You MUST include a friendly, approachable headshot or action shot placeholder (e.g. \`https://picsum.photos/400/400\`).
-        3. Manifesto/Leadership Vision section. 
-        4. Key Achievements and Participation timeline/grid. 
-        5. Persuasive CTA footer.
-
-        ${baseData}
-        ${universalRules}
-        `;
-    }
+    // Removed old Resume/Student conditionals since they are now nested.
 
     // Default Fallback
     return `
@@ -194,7 +196,7 @@ const getFineTunedPrompt = (useCase, aesthetics, formattedDynamicContext, custom
 };
 
 router.post('/generate', verifyToken, async (req, res) => {
-    const { useCase, aesthetics, dynamicData, customInstructions } = req.body;
+    const { useCase, portfolioFormat, aesthetics, dynamicData, customInstructions } = req.body;
 
     if (!useCase || !aesthetics || !dynamicData) {
         return res.status(400).json({ error: 'Missing required architecture details.' });
@@ -207,7 +209,7 @@ router.post('/generate', verifyToken, async (req, res) => {
         })
         .join('\n');
 
-    const prompt = getFineTunedPrompt(useCase, aesthetics, formattedDynamicContext, customInstructions);
+    const prompt = getFineTunedPrompt(useCase, portfolioFormat, aesthetics, formattedDynamicContext, customInstructions);
 
     try {
         const result = await generateWithFallback(prompt);

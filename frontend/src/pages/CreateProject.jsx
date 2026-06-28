@@ -5,11 +5,28 @@ import { Sparkles, Bot, ArrowRight, ChevronDown, Check } from 'lucide-react';
 
 // Configuration Schema for Dynamic Context Fields
 const archetypeSchemas = {
-  'Personal Portfolio':[
-    { id: 'projectTitle', label: 'Project Title', type: 'input', placeholder: 'e.g., Jane Doe Portfolio' },
-    { id: 'professionalRole', label: 'Professional Role', type: 'input', placeholder: 'e.g., Senior Full-Stack Developer' },
-    { id: 'keyAchievements', label: 'Key Achievements & Bio', type: 'textarea', placeholder: 'e.g., 10+ years experience, built scalable microservices, passionate about UI/UX.' }
-  ],
+  'Personal Portfolio': {
+    'Website': [
+      { id: 'projectTitle', label: 'Project Title', type: 'input', placeholder: 'e.g., Jane Doe Portfolio' },
+      { id: 'professionalRole', label: 'Professional Role', type: 'input', placeholder: 'e.g., Senior Full-Stack Developer' },
+      { id: 'keyAchievements', label: 'Key Achievements & Bio', type: 'textarea', placeholder: 'e.g., 10+ years experience, built scalable microservices, passionate about UI/UX.' }
+    ],
+    'Resume (PDF)': [
+      { id: 'candidateName', label: 'Candidate Name', type: 'input', placeholder: 'e.g., John Smith' },
+      { id: 'targetJobTitle', label: 'Target Job Title', type: 'input', placeholder: 'e.g., Senior Software Engineer' },
+      { id: 'professionalSummary', label: 'Professional Summary', type: 'textarea', placeholder: 'e.g., Highly motivated engineer with 5 years of experience...' },
+      { id: 'workExperience', label: 'Work Experience', type: 'textarea', placeholder: 'e.g., 2020-2023: Lead Developer at X Corp. 2018-2020: Developer at Y Inc.' },
+      { id: 'education', label: 'Education', type: 'input', placeholder: 'e.g., B.S. in Computer Science, University of Z' },
+      { id: 'keySkills', label: 'Key Skills', type: 'textarea', placeholder: 'e.g., React, Node.js, Python, AWS' }
+    ],
+    'Student Portfolio (PDF)': [
+      { id: 'studentName', label: 'Student Name', type: 'input', placeholder: 'e.g., Emily Chen' },
+      { id: 'targetDegreeRole', label: 'Target Degree / Role', type: 'input', placeholder: 'e.g., B.S. Architecture / Design Intern' },
+      { id: 'academicObjective', label: 'Academic Objective', type: 'textarea', placeholder: 'e.g., To leverage my design skills in a fast-paced agency...' },
+      { id: 'extracurriculars', label: 'Extracurriculars & Achievements', type: 'textarea', placeholder: "e.g., Debate Club Captain, Dean's List 2023" },
+      { id: 'coursework', label: 'Relevant Coursework', type: 'textarea', placeholder: 'e.g., Advanced Typography, 3D Modeling, UI/UX Principles' }
+    ]
+  },
   'Startup Landing Page':[
     { id: 'startupName', label: 'Startup Name', type: 'input', placeholder: 'e.g., TechNova Solutions' },
     { id: 'valueProposition', label: 'Value Proposition', type: 'textarea', placeholder: 'e.g., We revolutionize AI-driven analytics for enterprise supply chains.' },
@@ -26,21 +43,6 @@ const archetypeSchemas = {
     { id: 'productName', label: 'Product Name', type: 'input', placeholder: 'e.g., Lumina Smart Desk' },
     { id: 'keyFeatures', label: 'Key Features', type: 'textarea', placeholder: 'e.g., Motorized height adjustment, built-in wireless charging, cable management.' },
     { id: 'targetUseCases', label: 'Target Use Cases', type: 'textarea', placeholder: 'e.g., Remote work from home, executive offices, creative studios.' }
-  ],
-  'Resume / Job Portfolio': [
-    { id: 'candidateName', label: 'Candidate Name', type: 'input', placeholder: 'e.g., John Smith' },
-    { id: 'targetJobTitle', label: 'Target Job Title', type: 'input', placeholder: 'e.g., Senior Software Engineer' },
-    { id: 'professionalSummary', label: 'Professional Summary', type: 'textarea', placeholder: 'e.g., Highly motivated engineer with 5 years of experience...' },
-    { id: 'workExperience', label: 'Work Experience', type: 'textarea', placeholder: 'e.g., 2020-2023: Lead Developer at X Corp. 2018-2020: Developer at Y Inc.' },
-    { id: 'education', label: 'Education', type: 'input', placeholder: 'e.g., B.S. in Computer Science, University of Z' },
-    { id: 'keySkills', label: 'Key Skills', type: 'textarea', placeholder: 'e.g., React, Node.js, Python, AWS' }
-  ],
-  'Student / Leadership Portfolio': [
-    { id: 'candidateName', label: 'Candidate Name', type: 'input', placeholder: 'e.g., Emily Chen' },
-    { id: 'targetPosition', label: 'Target Position', type: 'input', placeholder: 'e.g., School Council President' },
-    { id: 'leadershipVision', label: 'Leadership Vision/Manifesto', type: 'textarea', placeholder: 'e.g., My vision is to create a more inclusive and active student body...' },
-    { id: 'keyAchievements', label: 'Key Achievements & Participation', type: 'textarea', placeholder: 'e.g., Debate Club Captain, Organized Winter Charity Drive...' },
-    { id: 'leadershipExperience', label: 'Leadership Experience', type: 'textarea', placeholder: 'e.g., Class Representative 2022-2023' }
   ]
 };
 
@@ -58,6 +60,7 @@ const CreateProject = () => {
 
   // Core State
   const [useCase, setUseCase] = useState('Personal Portfolio');
+  const [portfolioFormat, setPortfolioFormat] = useState('Website');
   const [aesthetics, setAesthetics] = useState('');
   const [customInstructions, setCustomInstructions] = useState('');
   const [dynamicData, setDynamicData] = useState({});
@@ -78,14 +81,15 @@ const CreateProject = () => {
     return () => clearInterval(interval);
   }, [isGenerating]);
 
-  // Initialize dynamic data state when useCase changes
+  // Initialize dynamic data state when useCase or portfolioFormat changes
   useEffect(() => {
     const defaultData = {};
-    archetypeSchemas[useCase].forEach(field => {
+    const schema = useCase === 'Personal Portfolio' ? archetypeSchemas[useCase][portfolioFormat] : archetypeSchemas[useCase];
+    schema.forEach(field => {
       defaultData[field.id] = '';
     });
     setDynamicData(defaultData);
-  }, [useCase]);
+  }, [useCase, portfolioFormat]);
 
   // Handle outside click for custom dropdown
   useEffect(() => {
@@ -107,12 +111,13 @@ const CreateProject = () => {
     setIsGenerating(true);
     
     // Use the first dynamic field as the database Title
-    const dbTitleKey = archetypeSchemas[useCase][0].id;
+    const schema = useCase === 'Personal Portfolio' ? archetypeSchemas[useCase][portfolioFormat] : archetypeSchemas[useCase];
+    const dbTitleKey = schema[0].id;
     const dbTitle = dynamicData[dbTitleKey] || `${useCase} Project`;
 
     try {
       // 1. Send specific Context to the AI Engine
-      const aiResponse = await api.post('/ai/generate', { useCase, aesthetics, dynamicData, customInstructions });
+      const aiResponse = await api.post('/ai/generate', { useCase, portfolioFormat, aesthetics, dynamicData, customInstructions });
       
       // 2. Save the AI generated layout to the DB
       const projectResponse = await api.post('/projects', { 
@@ -131,7 +136,7 @@ const CreateProject = () => {
     }
   };
 
-  const activeSchema = archetypeSchemas[useCase];
+  const activeSchema = useCase === 'Personal Portfolio' ? archetypeSchemas[useCase][portfolioFormat] : archetypeSchemas[useCase];
 
   return (
     <>
@@ -196,6 +201,22 @@ const CreateProject = () => {
                   </div>
                 )}
               </div>
+
+              {/* Sub-category for Personal Portfolio */}
+              {useCase === 'Personal Portfolio' && (
+                <div className="relative z-10 flex gap-2 p-1 bg-gray-100 dark:bg-slate-800/50 rounded-xl mt-4 border border-gray-200 dark:border-slate-700">
+                  {Object.keys(archetypeSchemas['Personal Portfolio']).map(format => (
+                    <button
+                      key={format}
+                      type="button"
+                      onClick={() => setPortfolioFormat(format)}
+                      className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all ${portfolioFormat === format ? 'bg-white dark:bg-slate-700 text-brand-600 dark:text-brand-400 shadow-sm border border-gray-200 dark:border-slate-600' : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}
+                    >
+                      {format}
+                    </button>
+                  ))}
+                </div>
+              )}
 
               <div className="h-px bg-gray-200 dark:bg-slate-800 my-8"></div>
 

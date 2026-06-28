@@ -78,19 +78,14 @@ const Editor = () => {
       
       // Make all new and existing elements freely draggable and resizable (Canva-style)
       editor.on('component:add', (component) => {
-        component.set({ resizable: true });
-        const style = component.getStyle();
-        if (!style.position) {
-          // Defaults for absolute drag mode to feel smooth
-          component.addStyle({ position: 'relative' }); 
-        }
+        component.set({ draggable: true, hoverable: true, selectable: true, resizable: true });
       });
 
-      // Enable resizability for components loaded from initial HTML
+      // Enable resizability and draggability for components loaded from initial HTML
       const wrapper = editor.getWrapper();
       if (wrapper) {
         wrapper.components().forEach((comp) => {
-          comp.set({ resizable: true });
+          comp.set({ draggable: true, hoverable: true, selectable: true, resizable: true });
         });
       }
 
@@ -101,14 +96,50 @@ const Editor = () => {
     };
   },[loading, project]);
 
+  // Sync theme (dark/light) inside GrapesJS canvas
+  useEffect(() => {
+    if (editorRef.current) {
+      const wrapper = editorRef.current.getWrapper();
+      if (wrapper) {
+        if (isDark) {
+          wrapper.addClass('dark');
+        } else {
+          wrapper.removeClass('dark');
+        }
+        // Also propagate to all top-level components (like #website-root)
+        wrapper.components().forEach((comp) => {
+          if (isDark) {
+            comp.addClass('dark');
+          } else {
+            comp.removeClass('dark');
+          }
+        });
+      }
+    }
+  }, [isDark, loading]);
+
+  const convertPxToRem = (text) => {
+    if (!text) return '';
+    return text.replace(/(\d*\.?\d+)px\b/g, (match, val) => {
+      const px = parseFloat(val);
+      if (px <= 2) return match; // Keep small borders intact
+      return `${(px / 16).toFixed(4)}rem`;
+    });
+  };
+
   const handleSave = async () => {
     if (!editorRef.current) return;
     setIsSaving(true);
     try {
+      const rawHtml = editorRef.current.getHtml();
+      const rawCss = editorRef.current.getCss();
+      const cleanHtml = convertPxToRem(rawHtml);
+      const cleanCss = convertPxToRem(rawCss);
+
       await api.put(`/projects/${id}`, { 
         title: project?.title,
-        html_content: editorRef.current.getHtml(), 
-        css_content: editorRef.current.getCss() 
+        html_content: cleanHtml, 
+        css_content: cleanCss 
       });
     } finally {
       setIsSaving(false);
@@ -122,23 +153,27 @@ const Editor = () => {
     htmlCode = htmlCode.replace(/<\/?(html|head|body|title)[^>]*>/gi, '');
     const cssCode = editorRef.current.getCss();
     
-    const isDarkExport = cssCode.includes('background-color: #0') || cssCode.includes('background: #0') || cssCode.includes('background-color: #1');
-    const bodyBg = isDarkExport ? '#020617' : '#ffffff';
+    // 1. Convert px to rem for absolute positions and sizing
+    const cleanHtml = convertPxToRem(htmlCode);
+    
+    // 2. Map #wrapper styles to body so they are not lost on export, and convert px to rem
+    const cleanCss = convertPxToRem(cssCode).replace(/#wrapper/g, 'body');
 
+    const htmlClassAttr = isDark ? ' class="dark"' : '';
     const fullSourceCode = `<!DOCTYPE html>
-<html lang="en">
+<html lang="en"${htmlClassAttr}>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${project.title}</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  body { margin: 0; padding: 0; font-family: 'Inter', sans-serif; background-color: ${bodyBg}; overflow-x: hidden; }
-  ${cssCode}
+  body { margin: 0; padding: 0; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+  ${cleanCss}
 </style>
 </head>
 <body>
-  ${htmlCode}
+  ${cleanHtml}
 </body>
 </html>`;
 
