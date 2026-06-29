@@ -1,4 +1,5 @@
 const express = require('express');
+const jwt = require('jsonwebtoken');
 const db = require('../db');
 const verifyToken = require('../middleware/auth');
 
@@ -15,7 +16,17 @@ router.post('/checkout', verifyToken, async (req, res) => {
     try {
         await db.query('UPDATE users SET plan = ? WHERE id = ?',[planName, userId]);
         
-        res.status(200).json({ message: 'Payment successful', updatedPlan: planName });
+        const newSignedToken = jwt.sign(
+            { id: req.user.id, email: req.user.email, name: req.user.name, plan: planName },
+            process.env.JWT_SECRET,
+            { expiresIn: '24h' }
+        );
+
+        res.status(200).json({ 
+            message: 'Payment successful', 
+            updatedPlan: planName, 
+            token: newSignedToken 
+        });
     } catch (error) {
         console.error('Checkout Error:', error);
         res.status(500).json({ error: 'Payment processing failed.' });

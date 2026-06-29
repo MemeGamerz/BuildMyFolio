@@ -87,7 +87,7 @@ const LandingPage = () => {
     try {
       await new Promise(resolve => setTimeout(resolve, 2000));
       const response = await api.post('/payments/checkout', { planName: checkoutModal.plan.name });
-      updatePlan(response.data.updatedPlan);
+      updatePlan(response.data.updatedPlan, response.data.token);
       setPaymentSuccess(true);
       setTimeout(() => { setCheckoutModal({ isOpen: false, plan: null }); setPaymentSuccess(false); }, 2000);
     } catch (err) {

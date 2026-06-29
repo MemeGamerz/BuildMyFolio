@@ -44,9 +44,19 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Dynamic method to update UI instantly after Checkout Modal completes
-  const updatePlan = (newPlan) => {
+  const updatePlan = (newPlan, newToken) => {
     localStorage.setItem('userPlan', newPlan);
-    setUser(prev => ({ ...prev, plan: newPlan }));
+    if (newToken) {
+      localStorage.setItem('token', newToken);
+    }
+    setUser(prev => {
+      if (!prev) return null;
+      const updatedUser = { ...prev, plan: newPlan };
+      if (newToken) {
+        updatedUser.token = newToken;
+      }
+      return updatedUser;
+    });
   };
 
   const logout = () => {

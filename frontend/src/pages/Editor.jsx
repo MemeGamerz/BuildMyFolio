@@ -14,6 +14,51 @@ const aiLoadingMessages = [
   "Polishing the layout..."
 ];
 
+const escapeHtml = (unsafe) => {
+  if (!unsafe) return '';
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+};
+
+const sanitizeHtml = (htmlString) => {
+  if (!htmlString) return '';
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(htmlString, 'text/html');
+  
+  const forbiddenRegex = /\b(parent|localStorage|sessionStorage)\b|document\.cookie\b/i;
+  
+  // 1. Strip any <script> tags containing forbidden keywords
+  const scripts = doc.querySelectorAll('script');
+  scripts.forEach(script => {
+    if (forbiddenRegex.test(script.textContent) || (script.src && forbiddenRegex.test(script.src))) {
+      script.remove();
+    }
+  });
+
+  // 2. Strip event handlers or javascript: URIs containing forbidden keywords from all elements
+  const allElements = doc.querySelectorAll('*');
+  allElements.forEach(el => {
+    const attrs = Array.from(el.attributes);
+    attrs.forEach(attr => {
+      const name = attr.name.toLowerCase();
+      const val = attr.value.trim().toLowerCase();
+      
+      const isEventHandler = name.startsWith('on');
+      const isJavascriptUri = val.startsWith('javascript:');
+      
+      if ((isEventHandler || isJavascriptUri) && forbiddenRegex.test(attr.value)) {
+        el.removeAttribute(attr.name);
+      }
+    });
+  });
+
+  return doc.body.innerHTML;
+};
+
 const Editor = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -165,7 +210,7 @@ const Editor = () => {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>${project.title}</title>
+<title>${escapeHtml(project.title)}</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   body { margin: 0; padding: 0; font-family: 'Inter', sans-serif; overflow-x: hidden; }
@@ -202,7 +247,8 @@ const Editor = () => {
         prompt: aiPrompt
       });
 
-      editorRef.current.setComponents(response.data.html);
+      const sanitizedHtml = sanitizeHtml(response.data.html);
+      editorRef.current.setComponents(sanitizedHtml);
       editorRef.current.setStyle(response.data.css);
       setAiPrompt('');
     } catch (err) {

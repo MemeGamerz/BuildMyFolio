@@ -1,3 +1,4 @@
 .env
 db.js
 node_modules
+ai-debug.log
