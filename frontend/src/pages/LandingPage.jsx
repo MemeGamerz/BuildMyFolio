@@ -11,13 +11,9 @@ const LandingPage = () => {
   const { user, updatePlan } = useContext(AuthContext);
   const navigate = useNavigate();
   
-  const[billingCycle, setBillingCycle] = useState('monthly');
+  const [billingCycle, setBillingCycle] = useState('monthly');
   const [pricingGeo, setPricingGeo] = useState({ currency: 'USD', symbol: '$', rate: 1 });
-  
-  const[easterEggActive, setEasterEggActive] = useState(false);
-  const [checkoutModal, setCheckoutModal] = useState({ isOpen: false, plan: null });
-  const [isProcessing, setIsProcessing] = useState(false);
-  const[paymentSuccess, setPaymentSuccess] = useState(false);
+  const [easterEggActive, setEasterEggActive] = useState(false);
 
   useEffect(() => {
     const fallbackTimezoneCheck = () => {
@@ -78,21 +74,7 @@ const LandingPage = () => {
   const handlePlanClick = (plan) => {
     if (!user) { navigate('/register'); return; }
     if (user.plan === plan.name) return;
-    setCheckoutModal({ isOpen: true, plan });
-  };
-
-  const processPayment = async (e) => {
-    e.preventDefault();
-    setIsProcessing(true);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      const response = await api.post('/payments/checkout', { planName: checkoutModal.plan.name });
-      updatePlan(response.data.updatedPlan, response.data.token);
-      setPaymentSuccess(true);
-      setTimeout(() => { setCheckoutModal({ isOpen: false, plan: null }); setPaymentSuccess(false); }, 2000);
-    } catch (err) {
-      alert("Payment failed. Please ensure backend server is running.");
-    } finally { setIsProcessing(false); }
+    navigate('/upgrade', { state: { plan, billingCycle } });
   };
 
   const plans =[
@@ -308,66 +290,7 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* CHECKOUT MODAL (HIGH FIDELITY) */}
-      {checkoutModal.isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-xl animate-fade-in perspective-1000">
-          <div className={`w-full max-w-md rounded-[2.5rem] shadow-2xl border overflow-hidden relative transform-3d animate-fade-in-up ${easterEggActive ? 'bg-black border-green-500 shadow-[0_0_40px_rgba(34,197,94,0.3)]' : 'bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800'}`}>
-            
-            <div className={`px-8 py-6 border-b flex justify-between items-center ${easterEggActive ? 'border-green-900 bg-green-900/20' : 'border-gray-100 dark:border-slate-800 bg-gray-50/50 dark:bg-slate-950/50'}`}>
-              <h3 className={`font-bold text-xl flex items-center gap-3 ${easterEggActive ? 'text-green-500' : 'text-gray-900 dark:text-white'}`}>
-                <CreditCard className={`h-6 w-6 ${easterEggActive ? 'text-green-500' : 'text-brand-500'}`} /> Secure Checkout
-              </h3>
-              <button onClick={() => !isProcessing && setCheckoutModal({isOpen: false, plan: null})} className={`p-2 rounded-full transition-colors ${easterEggActive ? 'hover:bg-green-900/40 text-green-700 hover:text-green-400' : 'hover:bg-gray-200 dark:hover:bg-slate-800 text-gray-400 hover:text-gray-900 dark:hover:text-white'}`}>
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <div className="p-8">
-              {paymentSuccess ? (
-                <div className="text-center py-10 animate-fade-in-up">
-                  <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner ${easterEggActive ? 'bg-green-900/40' : 'bg-green-100 dark:bg-green-900/30'}`}>
-                    <CheckCircle className={`h-10 w-10 ${easterEggActive ? 'text-green-500' : 'text-green-600 dark:text-green-400'}`} />
-                  </div>
-                  <h4 className={`text-3xl font-bold mb-3 ${easterEggActive ? 'text-green-400' : 'text-gray-900 dark:text-white'}`}>Success!</h4>
-                  <p className={`text-lg ${easterEggActive ? 'text-green-600' : 'text-gray-500 dark:text-gray-400'}`}>Welcome to the {checkoutModal.plan.name} tier.</p>
-                </div>
-              ) : (
-                <form onSubmit={processPayment}>
-                  <div className={`mb-8 p-6 rounded-2xl border ${easterEggActive ? 'bg-green-900/10 border-green-900/50' : 'bg-gray-50 dark:bg-slate-800/50 border-gray-100 dark:border-slate-700/50'}`}>
-                    <p className={`text-sm font-bold mb-2 uppercase tracking-widest ${easterEggActive ? 'text-green-600' : 'text-brand-600 dark:text-brand-400'}`}>Upgrading to</p>
-                    <div className="flex justify-between items-end">
-                      <h4 className={`text-4xl font-extrabold ${easterEggActive ? 'text-green-400' : 'text-gray-900 dark:text-white'}`}>{checkoutModal.plan.name}</h4>
-                      <span className={`text-2xl font-bold ${easterEggActive ? 'text-green-500' : 'text-gray-900 dark:text-white'}`}>
-                        {pricingGeo.symbol}{calculatePrice(checkoutModal.plan.basePrice)} <span className={`text-sm font-medium ${easterEggActive ? 'text-green-700' : 'text-gray-500'}`}>/mo</span>
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4 mb-10">
-                    <div>
-                      <label className={`block text-xs font-bold mb-2 uppercase tracking-wider ${easterEggActive ? 'text-green-600' : 'text-gray-700 dark:text-gray-300'}`}>Card Information</label>
-                      <div className="relative shadow-sm rounded-xl overflow-hidden">
-                        <input type="text" placeholder="Card number" required className={`w-full p-4 border outline-none font-mono text-base transition-all ${easterEggActive ? 'bg-black border-green-900 text-green-500 focus:border-green-500 placeholder-green-900/50' : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 focus:ring-2 focus:ring-brand-500 text-gray-900 dark:text-white'}`} defaultValue="4242 4242 4242 4242" />
-                        <div className="flex">
-                          <input type="text" placeholder="MM / YY" required className={`w-1/2 p-4 border-x border-b outline-none font-mono text-base transition-all ${easterEggActive ? 'bg-black border-green-900 text-green-500 focus:border-green-500 placeholder-green-900/50' : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 focus:ring-2 focus:ring-brand-500 text-gray-900 dark:text-white'}`} defaultValue="12 / 28" />
-                          <input type="text" placeholder="CVC" required className={`w-1/2 p-4 border-r border-b outline-none font-mono text-base transition-all ${easterEggActive ? 'bg-black border-green-900 text-green-500 focus:border-green-500 placeholder-green-900/50' : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 focus:ring-2 focus:ring-brand-500 text-gray-900 dark:text-white'}`} defaultValue="123" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <button type="submit" disabled={isProcessing} className={`w-full font-extrabold text-lg py-5 rounded-2xl shadow-xl transition-all duration-300 flex items-center justify-center gap-3 disabled:opacity-70 hover:-translate-y-1 ${easterEggActive ? 'bg-green-600 text-black hover:bg-green-500 shadow-[0_0_20px_rgba(34,197,94,0.4)]' : 'bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-brand-600 dark:hover:bg-brand-500'}`}>
-                    {isProcessing ? <><Loader2 className="h-6 w-6 animate-spin" /> Processing...</> : `Pay ${pricingGeo.symbol}${calculatePrice(checkoutModal.plan.basePrice)}`}
-                  </button>
-                  <p className={`text-center text-xs mt-6 flex justify-center items-center gap-1.5 font-medium ${easterEggActive ? 'text-green-800' : 'text-gray-400'}`}>
-                    <CreditCard className="h-4 w-4" /> Payments are simulated for this demo.
-                  </p>
-                </form>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Removed Checkout Modal */}
 
       {/* FULL PROFESSIONAL FOOTER */}
       <footer className={`relative z-10 border-t pt-16 pb-8 ${easterEggActive ? 'bg-black border-green-900/50' : 'bg-white dark:bg-slate-900 border-gray-200 dark:border-slate-800'}`}>

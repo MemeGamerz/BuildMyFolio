@@ -9,6 +9,7 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import CreateProject from './pages/CreateProject';
 import Editor from './pages/Editor';
+import Upgrade from './pages/Upgrade';
 
 const PrivateRoute = ({ children }) => {
   const { user, loading } = useContext(AuthContext);
@@ -31,6 +32,7 @@ const AppLayout = () => {
           <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
           <Route path="/editor/new" element={<PrivateRoute><CreateProject /></PrivateRoute>} />
           <Route path="/editor/:id" element={<PrivateRoute><Editor /></PrivateRoute>} />
+          <Route path="/upgrade" element={<PrivateRoute><Upgrade /></PrivateRoute>} />
         </Routes>
       </div>
     </div>
