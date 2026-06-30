@@ -115,23 +115,34 @@ const Editor = () => {
             'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap'
           ]
         },
-        components: project.html_content || '',
-        style: project.css_content || '',
+        // Fallback to HTML/CSS if no JSON project data exists (for older projects)
+        components: !project.project_data ? (project.html_content || '') : '',
+        style: !project.project_data ? (project.css_content || '') : '',
       });
 
-      editor.getConfig().dragMode = 'absolute';
+      // Load lossless GrapesJS JSON project data if it exists
+      if (project.project_data) {
+        editor.loadProjectData(project.project_data);
+      }
       
-      // Make all new and existing elements freely draggable and resizable (Canva-style)
+      // Make all new elements freely draggable and resizable (Canva-style)
       editor.on('component:add', (component) => {
         component.set({ draggable: true, hoverable: true, selectable: true, resizable: true });
       });
 
-      // Enable resizability and draggability for components loaded from initial HTML
+      // Recursively enable resizability and draggability for all nested components loaded from initial HTML
+      const makeAllComponentsDraggable = (comp) => {
+        if (!comp) return;
+        // Do not make the wrapper itself draggable
+        if (comp !== editor.getWrapper()) {
+          comp.set({ draggable: true, hoverable: true, selectable: true, resizable: true });
+        }
+        comp.components().forEach((child) => makeAllComponentsDraggable(child));
+      };
+
       const wrapper = editor.getWrapper();
       if (wrapper) {
-        wrapper.components().forEach((comp) => {
-          comp.set({ draggable: true, hoverable: true, selectable: true, resizable: true });
-        });
+        makeAllComponentsDraggable(wrapper);
       }
 
       editorRef.current = editor;
@@ -180,9 +191,11 @@ const Editor = () => {
       const rawCss = editorRef.current.getCss();
       const cleanHtml = convertPxToRem(rawHtml);
       const cleanCss = convertPxToRem(rawCss);
+      const projectData = editorRef.current.getProjectData();
 
       await api.put(`/projects/${id}`, { 
         title: project?.title,
+        project_data: projectData,
         html_content: cleanHtml, 
         css_content: cleanCss 
       });

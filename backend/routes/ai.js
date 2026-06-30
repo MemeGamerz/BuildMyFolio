@@ -14,11 +14,11 @@ const generationConfig = {
 };
 
 const primaryModel = genAI.getGenerativeModel({ 
-    model: 'gemini-3.1-flash-lite',
+    model: 'gemma-4-31b-it',
     generationConfig
 });
 const fallbackModel = genAI.getGenerativeModel({ 
-    model: 'gemma-4-31b-it',
+    model: 'gemma-4-26b-a4b-it',
     generationConfig
 });
 
@@ -26,7 +26,7 @@ async function generateWithFallback(prompt) {
     try {
         return await primaryModel.generateContent(prompt);
     } catch (error) {
-        console.warn('Primary model failed, falling back to gemma-4-31b-it:', error.message);
+        console.warn('Primary model failed, falling back to gemma-4-26b-a4b-it:', error.message);
         return await fallbackModel.generateContent(prompt);
     }
 }
@@ -42,23 +42,31 @@ const getFineTunedPrompt = (useCase, portfolioFormat, aesthetics, formattedDynam
         ### INSTRUCTION 1: ULTRA-PREMIUM VERCEL/LINEAR AESTHETICS ###
         1. Act as a Principal Design Engineer at Vercel or Linear. 
         2. The design MUST be minimalist, high-contrast, and deeply elegant. Use massive amounts of whitespace, crisp typography (Inter or similar), and extremely clean grid/flexbox layouts.
-        3. Do NOT use cheap, bulky shadows or generic UI paradigms. Use subtle borders (e.g., \`border: 1px solid rgba(255,255,255,0.1)\`), incredibly soft glows, and monochromatic or highly muted color palettes unless otherwise specified.
+        3. Do NOT use cheap, bulky shadows or generic UI paradigms. Use subtle borders (e.g., \`border: 1px solid var(--border)\`), incredibly soft glows, and monochromatic or highly muted color palettes unless otherwise specified.
         4. Include \`@media (max-width: 768px)\` to stack grids/flex containers to 1 column.
 
-        ### INSTRUCTION 2: SMOOTH, SUBTLE MICRO-ANIMATIONS ###
+        ### INSTRUCTION 2: THEME INTERPRETATION & COLOR PALETTE (CRITICAL) ###
+        1. When the user specifies a theme/aesthetic (even custom ones like "emerald forest", "warm retro", or "midnight neon"), you MUST map it to a highly sophisticated, professional color palette. Do NOT use raw or highly saturated primary colors.
+        2. Apply the **60-30-10 Color Rule**:
+           - **60% Dominant Color (Backgrounds/Canvas)**: A clean, sophisticated neutral. Use off-whites, soft creams, or warm grays for light themes; use deep slates, dark charcoal, or midnight blues for dark themes.
+           - **30% Secondary Color (Text & Structural Borders)**: For primary text, body copy, and element borders. Ensure a minimum of 4.5:1 contrast ratio against the background.
+           - **10% Accent Color (Interactive / CTAs / Highlights)**: A single, highly curated, vibrant accent color matching the theme (e.g., deep forest green, burnt orange, electric indigo, champagne gold).
+        3. **CSS Variable Mapping**: Define all theme colors as CSS variables under \`#website-root\` (e.g., \`--bg\`, \`--text\`, \`--text-muted\`, \`--border\`, \`--accent\`, \`--card-bg\`) and use them exclusively throughout the stylesheet. This makes the theme 100% cohesive and easily editable.
+
+        ### INSTRUCTION 3: SMOOTH, SUBTLE MICRO-ANIMATIONS ###
         1. All animations MUST be extremely subtle, fluid, and premium. Use \`transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);\` (ease-out-expo) for hover states.
         2. DO NOT use bouncy, wobbly, or cheap jarring animations. Use subtle opacity fades (\`opacity: 0\` to \`opacity: 1\`) and tiny Y-axis translations (\`translateY(10px)\` to \`0\`).
         3. Implement elegant entrance animations for key sections using CSS \`@keyframes\` and \`animation-fill-mode: forwards\`.
 
-        ### INSTRUCTION 2: COLOR, CONTRAST & WRAPPER ###
+        ### INSTRUCTION 4: COLOR, CONTRAST & WRAPPER ###
         1. Wrap the ENTIRE HTML content inside a single \`<div id="website-root">...</div>\`.
-        2. In CSS, target \`#website-root\` and explicitly define the base \`background\` and text \`color\`. Maintain strict contrast rules (Dark bg = light text, Light bg = dark text).
+        2. In CSS, target \`#website-root\` and explicitly define the base \`background\` and text \`color\` using your CSS variables.
         3. Start your CSS with a global reset: \`* { box-sizing: border-box; margin: 0; padding: 0; }\`
 
-        ### INSTRUCTION 3: FUNCTIONAL JAVASCRIPT (CRITICAL NEW FEATURE) ###
+        ### INSTRUCTION 5: FUNCTIONAL JAVASCRIPT ###
         1. If the user's prompt implies interactivity (e.g., "Add a theme change button", "interactive slider", "mobile menu toggle"), you MUST write robust, vanilla JavaScript to make it work perfectly.
         2. Write the JavaScript inside a standard \`<script> ... </script>\` tag and place it at the VERY BOTTOM of your \`html\` string output (inside or just after the #website-root div).
-        3. Ensure your JS targets the correct IDs/Classes you generated. (e.g., if you make a dark mode toggle, write the JS to toggle a '.dark-theme' class on #website-root and supply the corresponding CSS).
+        3. Ensure your JS targets the correct IDs/Classes you generated.
 
         Generate the response strictly as a JSON object containing EXACTLY two keys:
         1. "html": Semantic HTML5 elements inside \`<div id="website-root">...</div>\`, AND optionally ending with your \`<script>\` tag. NO <html> or <body> tags.
@@ -106,6 +114,7 @@ const getFineTunedPrompt = (useCase, portfolioFormat, aesthetics, formattedDynam
         3. Professional, highly readable Header. Include a clean, professional headshot placeholder (e.g. \`https://picsum.photos/200/200\`).
         4. Detailed Experience timeline, Education, and Skills sections.
         5. CRITICAL - NO COLLAPSIBLE MEDIA QUERIES: Do NOT generate any @media queries that make the layout relative, collapse the A4 page size, or stack the absolute-positioned blocks vertically on mobile. The PDF layout must remain fixed and absolute on all screen sizes.
+        6. CRITICAL - PREVENT PARENT COLLAPSE: Every parent container, column, or section block inside the A4 page MUST have an explicit \`height\` or \`min-height\` (e.g., \`min-height: 150px;\` or \`height: 220px;\`) and \`width\`. Never use \`height: auto;\` for containers, because placing absolute children inside them (or dragging them) will cause the parent container to collapse to 0px, breaking the layout.
 
         ${baseData}
         ${universalRules}
@@ -123,6 +132,7 @@ const getFineTunedPrompt = (useCase, portfolioFormat, aesthetics, formattedDynam
         3. Impactful Hero/Header stating the Target Position. Include a friendly headshot placeholder (e.g. \`https://picsum.photos/200/200\`).
         4. Manifesto/Academic Objective section, Key Achievements, and Relevant Coursework.
         5. CRITICAL - NO COLLAPSIBLE MEDIA QUERIES: Do NOT generate any @media queries that make the layout relative, collapse the A4 page size, or stack the absolute-positioned blocks vertically on mobile. The PDF layout must remain fixed and absolute on all screen sizes.
+        6. CRITICAL - PREVENT PARENT COLLAPSE: Every parent container, column, or section block inside the A4 page MUST have an explicit \`height\` or \`min-height\` (e.g., \`min-height: 150px;\` or \`height: 220px;\`) and \`width\`. Never use \`height: auto;\` for containers, because placing absolute children inside them (or dragging them) will cause the parent container to collapse to 0px, breaking the layout.
 
         ${baseData}
         ${universalRules}

@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS projects (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     title VARCHAR(255) NOT NULL,
+    project_data JSON,
     html_content LONGTEXT,
     css_content LONGTEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

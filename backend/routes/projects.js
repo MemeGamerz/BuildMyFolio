@@ -6,7 +6,7 @@ const router = express.Router();
 
 // Create new project
 router.post('/', verifyToken, async (req, res) => {
-    const { title, html_content, css_content } = req.body;
+    const { title, project_data, html_content, css_content } = req.body;
     const userId = req.user.id;
 
     if (!title) {
@@ -15,7 +15,8 @@ router.post('/', verifyToken, async (req, res) => {
 
     try {
         const [result] = await db.query(
-            'INSERT INTO projects (user_id, title, html_content, css_content) VALUES (?, ?, ?, ?)',[userId, title, html_content || '', css_content || '']
+            'INSERT INTO projects (user_id, title, project_data, html_content, css_content) VALUES (?, ?, ?, ?, ?)',
+            [userId, title, project_data ? JSON.stringify(project_data) : null, html_content || '', css_content || '']
         );
         res.status(201).json({ message: 'Project created successfully', projectId: result.insertId });
     } catch (error) {
@@ -66,12 +67,12 @@ router.get('/:id', verifyToken, async (req, res) => {
 router.put('/:id', verifyToken, async (req, res) => {
     const userId = req.user.id;
     const projectId = req.params.id;
-    const { title, html_content, css_content } = req.body;
+    const { title, project_data, html_content, css_content } = req.body;
 
     try {
         const [updateResult] = await db.query(
-            'UPDATE projects SET title = COALESCE(?, title), html_content = COALESCE(?, html_content), css_content = COALESCE(?, css_content) WHERE id = ? AND user_id = ?',
-            [title, html_content, css_content, projectId, userId]
+            'UPDATE projects SET title = COALESCE(?, title), project_data = COALESCE(?, project_data), html_content = COALESCE(?, html_content), css_content = COALESCE(?, css_content) WHERE id = ? AND user_id = ?',
+            [title, project_data ? JSON.stringify(project_data) : null, html_content, css_content, projectId, userId]
         );
 
         if (updateResult.affectedRows === 0) {
