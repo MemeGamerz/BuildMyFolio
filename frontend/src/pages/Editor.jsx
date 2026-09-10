@@ -5,7 +5,7 @@ import grapesjs from 'grapesjs';
 import 'grapesjs/dist/css/grapes.min.css';
 import webpagePreset from 'grapesjs-preset-webpage';
 import { ThemeContext } from '../context/ThemeContext';
-import { Save, Download, ArrowLeft, Loader2, Monitor, Sun, Moon, Sparkles, Send } from 'lucide-react';
+import { Save, Download, ArrowLeft, Loader2, Monitor, Sun, Moon, Sparkles, Send, Check, Tablet, Smartphone } from 'lucide-react';
 
 const aiLoadingMessages = [
   "Analyzing canvas context...",
@@ -63,16 +63,31 @@ const Editor = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const editorRef = useRef(null);
+  const aiInputRef = useRef(null);
   
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [selectedDevice, setSelectedDevice] = useState('desktop');
   const { isDark, toggleTheme } = useContext(ThemeContext);
 
   // Floating AI Bar State
   const [aiPrompt, setAiPrompt] = useState('');
   const [isAiProcessing, setIsAiProcessing] = useState(false);
   const [aiLoadingStep, setAiLoadingStep] = useState(0);
+
+  // Keyboard shortcut: Cmd+K / Ctrl+K to focus AI bar
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        aiInputRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // Cycle loading messages
   useEffect(() => {
@@ -110,6 +125,13 @@ const Editor = () => {
         plugins: [webpagePreset],
         storageManager: false,
         allowScripts: 1, // <--- CRITICAL: Unlocks AI-generated JS execution inside the canvas!
+        deviceManager: {
+          devices: [
+            { id: 'desktop', name: 'Desktop', width: '' },
+            { id: 'tablet', name: 'Tablet', width: '768px', widthMedia: '992px' },
+            { id: 'mobile', name: 'Mobile', width: '375px', widthMedia: '480px' },
+          ]
+        },
         canvas: {
           styles:[
             'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap'

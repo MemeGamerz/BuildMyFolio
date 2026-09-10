@@ -1,8 +1,16 @@
 const express = require('express');
+const fs = require('fs');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const verifyToken = require('../middleware/auth');
 
 const router = express.Router();
+
+function logAiError(prefix, error) {
+    const entry = `${new Date().toISOString()} ${prefix}: ${error.stack || error}\n`;
+    fs.appendFile('ai-debug.log', entry, (err) => {
+        if (err) console.error('Failed writing to ai-debug.log:', err.message);
+    });
+}
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
@@ -310,6 +318,10 @@ router.post('/generate', verifyToken, async (req, res) => {
         return res.status(400).json({ error: 'Missing required architecture details.' });
     }
 
+    if (customInstructions && typeof customInstructions === 'string' && customInstructions.length > 2500) {
+        return res.status(400).json({ error: 'Custom instructions cannot exceed 2500 characters.' });
+    }
+
     const formattedDynamicContext = Object.entries(dynamicData)
         .map(([key, value]) => {
             const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
@@ -326,7 +338,7 @@ router.post('/generate', verifyToken, async (req, res) => {
         
         res.status(200).json({ html: parsedData.html, css: parsedData.css });
     } catch (error) {
-        require('fs').appendFileSync('ai-debug.log', new Date().toISOString() + ' GENERATE ERROR: ' + (error.stack || error) + '\n');
+        logAiError('GENERATE ERROR', error);
         console.error('AI Generation Error:', error.message || error);
         res.status(500).json({ error: 'Failed to generate website layout via AI.' });
     }
@@ -337,6 +349,10 @@ router.post('/edit', verifyToken, async (req, res) => {
 
     if (!html || !css || !userPrompt) {
         return res.status(400).json({ error: 'Missing current canvas data or prompt.' });
+    }
+
+    if (typeof userPrompt === 'string' && userPrompt.length > 2500) {
+        return res.status(400).json({ error: 'Edit prompt cannot exceed 2500 characters.' });
     }
 
     const aiPrompt = `
@@ -376,7 +392,7 @@ router.post('/edit', verifyToken, async (req, res) => {
         
         res.status(200).json({ html: parsedData.html, css: parsedData.css });
     } catch (error) {
-        require('fs').appendFileSync('ai-debug.log', new Date().toISOString() + ' EDIT ERROR: ' + (error.stack || error) + '\n');
+        logAiError('EDIT ERROR', error);
         console.error('AI Edit Error:', error.message || error);
         res.status(500).json({ error: 'Failed to apply edits via AI.' });
     }

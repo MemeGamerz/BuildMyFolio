@@ -72,7 +72,14 @@ router.put('/:id', verifyToken, async (req, res) => {
     try {
         const [updateResult] = await db.query(
             'UPDATE projects SET title = COALESCE(?, title), project_data = COALESCE(?, project_data), html_content = COALESCE(?, html_content), css_content = COALESCE(?, css_content) WHERE id = ? AND user_id = ?',
-            [title, project_data ? JSON.stringify(project_data) : null, html_content, css_content, projectId, userId]
+            [
+                title !== undefined ? title : null,
+                project_data !== undefined ? (project_data ? JSON.stringify(project_data) : null) : null,
+                html_content !== undefined ? html_content : null,
+                css_content !== undefined ? css_content : null,
+                projectId,
+                userId
+            ]
         );
 
         if (updateResult.affectedRows === 0) {

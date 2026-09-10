@@ -5,12 +5,14 @@ const verifyToken = require('../middleware/auth');
 
 const router = express.Router();
 
+const ALLOWED_PLANS = ['Hobby', 'Pro', 'Enterprise'];
+
 router.post('/checkout', verifyToken, async (req, res) => {
     const { planName } = req.body;
     const userId = req.user.id;
 
-    if (!planName) {
-        return res.status(400).json({ error: 'Plan name is required.' });
+    if (!planName || !ALLOWED_PLANS.includes(planName)) {
+        return res.status(400).json({ error: `Invalid plan specified. Allowed plans: ${ALLOWED_PLANS.join(', ')}` });
     }
 
     try {
