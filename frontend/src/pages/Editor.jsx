@@ -205,6 +205,15 @@ const Editor = () => {
     });
   };
 
+  const handleDeviceChange = (device) => {
+    setSelectedDevice(device);
+    if (!editorRef.current) return;
+    const deviceManager = editorRef.current.Devices;
+    if (deviceManager) {
+      deviceManager.select(device);
+    }
+  };
+
   const handleSave = async () => {
     if (!editorRef.current) return;
     setIsSaving(true);
@@ -221,6 +230,12 @@ const Editor = () => {
         html_content: cleanHtml, 
         css_content: cleanCss 
       });
+
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 2500);
+    } catch (err) {
+      console.error('Save Project Error:', err);
+      alert('Failed to save project. Please check your network connection and try again.');
     } finally {
       setIsSaving(false);
     }
@@ -238,6 +253,7 @@ const Editor = () => {
     
     // 2. Map #wrapper styles to body so they are not lost on export, and convert px to rem
     const cleanCss = convertPxToRem(cssCode).replace(/#wrapper/g, 'body');
+    const safeCleanCss = cleanCss.replace(/<\/style/gi, '<\\/style');
 
     const htmlClassAttr = isDark ? ' class="dark"' : '';
     const fullSourceCode = `<!DOCTYPE html>
@@ -245,11 +261,11 @@ const Editor = () => {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>${escapeHtml(project.title)}</title>
+<title>${escapeHtml(project?.title || 'My Project')}</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
   body { margin: 0; padding: 0; font-family: 'Inter', sans-serif; overflow-x: hidden; }
-  ${cleanCss}
+  ${safeCleanCss}
 </style>
 </head>
 <body>
@@ -261,7 +277,7 @@ const Editor = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${project.title.replace(/\s+/g, '_').toLowerCase()}.html`;
+    a.download = `${(project?.title || 'project').replace(/\s+/g, '_').toLowerCase()}.html`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -303,34 +319,86 @@ const Editor = () => {
     <div className="h-screen w-full flex flex-col overflow-hidden animate-fade-in bg-[var(--editor-bg)] text-[var(--editor-text)] relative">
       
       {/* Floating Toolbar (Figma Style) */}
-      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 flex items-center justify-between px-4 py-2 bg-[#2C2C2C]/90 backdrop-blur-xl border border-[#444444] rounded-xl shadow-2xl z-50 min-w-[400px]">
-        <div className="flex items-center gap-3">
-          <button onClick={() => navigate('/dashboard')} className="flex items-center gap-2 p-1.5 rounded text-xs font-medium text-[#8A8A8A] hover:text-white hover:bg-[#444444]/50 transition-colors">
+      <div className="absolute top-4 left-1/2 transform -translate-x-1/2 flex items-center justify-between px-3 sm:px-4 py-2 bg-white/95 dark:bg-[#2C2C2C]/90 backdrop-blur-xl border border-slate-200 dark:border-[#444444] rounded-2xl shadow-2xl z-50 w-[95vw] max-w-2xl">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <button 
+            onClick={() => navigate('/dashboard')} 
+            aria-label="Back to Dashboard"
+            className="flex items-center gap-1 p-1.5 rounded-lg text-xs font-medium text-slate-500 dark:text-[#8A8A8A] hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#444444]/50 transition-colors"
+          >
             <ArrowLeft className="h-3.5 w-3.5" />
           </button>
-          <div className="h-4 w-px bg-[#444444]"></div>
+          <div className="h-4 w-px bg-slate-200 dark:bg-[#444444]"></div>
           <input 
             type="text" 
             value={project?.title || ''} 
             onChange={(e) => setProject({ ...project, title: e.target.value })}
-            className="font-medium text-xs truncate max-w-[150px] text-[#E0E0E0] bg-transparent border-none outline-none focus:ring-1 focus:ring-[#18A0FB] rounded px-1 py-0.5 transition-all"
+            className="font-medium text-xs truncate max-w-[120px] sm:max-w-[180px] text-slate-800 dark:text-[#E0E0E0] bg-transparent border-none outline-none focus:ring-1 focus:ring-brand-500 rounded px-1.5 py-0.5 transition-all"
             placeholder="Project Title"
             title="Edit Project Title"
+            aria-label="Edit Project Title"
           />
         </div>
 
-        <div className="flex items-center gap-2">
-          <button onClick={toggleTheme} className="p-1.5 rounded text-[#8A8A8A] hover:text-white hover:bg-[#444444]/50 transition-colors">
+        {/* Responsive Device Viewports */}
+        <div className="flex items-center gap-1 bg-slate-100 dark:bg-[#1E1E1E] p-0.5 rounded-lg border border-slate-200/80 dark:border-[#333333]">
+          <button
+            type="button"
+            onClick={() => handleDeviceChange('desktop')}
+            className={`p-1.5 rounded-md text-xs transition-colors ${selectedDevice === 'desktop' ? 'bg-white dark:bg-[#333333] text-brand-600 dark:text-white shadow-sm font-medium' : 'text-slate-400 dark:text-[#8A8A8A] hover:text-slate-700 dark:hover:text-white'}`}
+            title="Desktop Canvas"
+            aria-label="Desktop Canvas"
+          >
+            <Monitor className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => handleDeviceChange('tablet')}
+            className={`p-1.5 rounded-md text-xs transition-colors ${selectedDevice === 'tablet' ? 'bg-white dark:bg-[#333333] text-brand-600 dark:text-white shadow-sm font-medium' : 'text-slate-400 dark:text-[#8A8A8A] hover:text-slate-700 dark:hover:text-white'}`}
+            title="Tablet Canvas (768px)"
+            aria-label="Tablet Canvas"
+          >
+            <Tablet className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => handleDeviceChange('mobile')}
+            className={`p-1.5 rounded-md text-xs transition-colors ${selectedDevice === 'mobile' ? 'bg-white dark:bg-[#333333] text-brand-600 dark:text-white shadow-sm font-medium' : 'text-slate-400 dark:text-[#8A8A8A] hover:text-slate-700 dark:hover:text-white'}`}
+            title="Mobile Canvas (375px)"
+            aria-label="Mobile Canvas"
+          >
+            <Smartphone className="h-3.5 w-3.5" />
+          </button>
+        </div>
+
+        <div className="flex items-center gap-1 sm:gap-2">
+          <button 
+            onClick={toggleTheme} 
+            aria-label="Toggle Theme"
+            className="p-1.5 rounded-lg text-slate-500 dark:text-[#8A8A8A] hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#444444]/50 transition-colors"
+          >
             {isDark ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
           </button>
           
-          <button onClick={handleExport} className="p-1.5 rounded text-[#8A8A8A] hover:text-white hover:bg-[#444444]/50 transition-colors" title="Export HTML/CSS">
+          <button 
+            onClick={handleExport} 
+            aria-label="Export HTML/CSS"
+            className="p-1.5 rounded-lg text-slate-500 dark:text-[#8A8A8A] hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-[#444444]/50 transition-colors" 
+            title="Export HTML/CSS"
+          >
             <Download className="h-3.5 w-3.5" />
           </button>
           
-          <button onClick={handleSave} disabled={isSaving} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-[#18A0FB] hover:bg-[#18A0FB]/80 rounded shadow-lg transition-all active:scale-95 disabled:opacity-70 ml-2">
-            {isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-            {isSaving ? 'Saving' : 'Save'}
+          <button 
+            onClick={handleSave} 
+            disabled={isSaving} 
+            aria-label="Save Project"
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white rounded-lg shadow-md transition-all active:scale-95 disabled:opacity-70 ml-1 ${
+              saveSuccess ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-brand-600 hover:bg-brand-500'
+            }`}
+          >
+            {isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : saveSuccess ? <Check className="h-3.5 w-3.5" /> : <Save className="h-3.5 w-3.5" />}
+            {isSaving ? 'Saving' : saveSuccess ? 'Saved!' : 'Save'}
           </button>
         </div>
       </div>
@@ -339,30 +407,32 @@ const Editor = () => {
       <div id="gjs" className="flex-grow w-full border-none m-0 p-0 transition-colors duration-300"></div>
 
       {/* FLOATING AI COPILOT COMMAND PALETTE */}
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 w-[90%] max-w-xl z-50 animate-fade-in-up">
+      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 w-[92%] max-w-xl z-50 animate-fade-in-up">
         <form 
           onSubmit={handleAiEdit} 
-          className={`flex items-center gap-2 bg-[#2C2C2C]/90 backdrop-blur-xl border p-1.5 rounded-2xl transition-all duration-300 ${
+          className={`flex items-center gap-2 bg-white/95 dark:bg-[#2C2C2C]/90 backdrop-blur-xl border p-1.5 rounded-2xl shadow-2xl transition-all duration-300 ${
             isAiProcessing 
-              ? 'border-[#18A0FB] shadow-[0_0_20px_rgba(24,160,251,0.3)] animate-pulse' 
-              : 'border-[#444444] shadow-2xl hover:border-[#18A0FB]/50 hover:shadow-[0_0_15px_rgba(0,0,0,0.5)]'
+              ? 'border-brand-500 shadow-[0_0_20px_rgba(168,85,247,0.3)] animate-pulse' 
+              : 'border-slate-200 dark:border-[#444444] hover:border-brand-500/50'
           }`}
         >
-          <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-tr from-[#18A0FB] to-[#9333ea] text-white flex-shrink-0 ml-1">
+          <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-tr from-brand-600 to-fuchsia-500 text-white flex-shrink-0 ml-1 shadow-sm">
             {isAiProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
           </div>
           <input
+            ref={aiInputRef}
             type="text"
             value={aiPrompt}
             onChange={(e) => setAiPrompt(e.target.value)}
             disabled={isAiProcessing}
             placeholder={isAiProcessing ? aiLoadingMessages[aiLoadingStep] : "Cmd+K to ask AI to redesign elements..."}
-            className="flex-grow bg-transparent border-none outline-none text-[#E0E0E0] placeholder-[#8A8A8A] text-sm font-medium px-2"
+            className="flex-grow bg-transparent border-none outline-none text-slate-800 dark:text-[#E0E0E0] placeholder-slate-400 dark:placeholder-[#8A8A8A] text-sm font-medium px-2"
           />
           <button
             type="submit"
             disabled={isAiProcessing || !aiPrompt.trim()}
-            className="flex items-center justify-center w-8 h-8 rounded-xl bg-[#1E1E1E] text-[#18A0FB] hover:bg-[#444444] disabled:opacity-50 transition-colors flex-shrink-0 mr-1"
+            aria-label="Send AI Prompt"
+            className="flex items-center justify-center w-8 h-8 rounded-xl bg-slate-100 dark:bg-[#1E1E1E] text-brand-600 dark:text-brand-400 hover:bg-slate-200 dark:hover:bg-[#444444] disabled:opacity-40 transition-colors flex-shrink-0 mr-1"
           >
             <Send className="h-3.5 w-3.5" />
           </button>

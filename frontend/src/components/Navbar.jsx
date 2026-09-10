@@ -75,15 +75,34 @@ const Navbar = () => {
             {user ? (
               <>
                 {/* Logged In View */}
+                <div className="flex items-center gap-2">
+                  <span className={`text-xs px-2.5 py-1 rounded-full font-semibold border ${
+                    user.plan === 'Pro' || user.plan === 'Enterprise'
+                      ? 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700'
+                  }`}>
+                    {user.plan || 'Hobby'}
+                  </span>
+
+                  {user.plan !== 'Pro' && user.plan !== 'Enterprise' && (
+                    <Link
+                      to="/upgrade"
+                      className="hidden sm:inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-semibold bg-gradient-to-r from-brand-600 to-fuchsia-600 text-white shadow-sm hover:opacity-95 transition-opacity"
+                    >
+                      <Sparkles className="h-3 w-3" /> Upgrade
+                    </Link>
+                  )}
+                </div>
+
                 <Link
                   to="/dashboard"
-                  className="text-gray-600 dark:text-gray-300 hover:text-brand-600 dark:hover:text-brand-400 font-semibold transition-colors"
+                  className="text-gray-600 dark:text-gray-300 hover:text-brand-600 dark:hover:text-brand-400 font-semibold transition-colors text-sm sm:text-base"
                 >
                   Dashboard
                 </Link>
                 <button
                   onClick={handleLogout}
-                  className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white font-medium transition-colors"
+                  className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white font-medium transition-colors text-sm sm:text-base"
                 >
                   Logout
                 </button>
@@ -93,13 +112,13 @@ const Navbar = () => {
                 {/* Logged Out View */}
                 <Link
                   to="/login"
-                  className="hidden sm:block text-gray-600 dark:text-gray-300 hover:text-brand-600 dark:hover:text-brand-400 font-semibold transition-colors"
+                  className="text-gray-600 dark:text-gray-300 hover:text-brand-600 dark:hover:text-brand-400 font-semibold transition-colors text-sm sm:text-base"
                 >
                   Log in
                 </Link>
                 <Link
                   to="/register"
-                  className="flex items-center gap-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-5 py-2.5 rounded-full font-medium hover:-translate-y-0.5 transition-all shadow-lg shadow-gray-900/20 dark:shadow-white/20 active:scale-95"
+                  className="flex items-center gap-1.5 sm:gap-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full text-sm sm:text-base font-medium hover:-translate-y-0.5 transition-all shadow-lg shadow-gray-900/20 dark:shadow-white/20 active:scale-95"
                 >
                   Get Started <Sparkles className="h-4 w-4" />
                 </Link>
